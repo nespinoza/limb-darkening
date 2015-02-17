@@ -330,6 +330,11 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     parameter space). If the model is not present in the system, it downloads it from 
     Robert L. Kurucz's website (kurucz.harvard.edu/grids.html).
     """
+   
+    if not os.path.exists('atlas_models'):
+       os.mkdir('atlas_models')
+       os.mkdir('atlas_models/raw_models') 
+
     def getFileLines(fname):
         f = open(fname,'r')
 	l = f.readline()
@@ -580,6 +585,10 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     parameter space). If the model is not present in the system, it downloads it from 
     the PHOENIX public library (phoenix.astro.physik.uni-goettingen.de).
     """
+
+    if not os.path.exists('phoenix_models'):
+       os.mkdir('phoenix_models')
+       os.mkdir('phoenix_models/raw_models')
 
     model_path = 'phoenix_models/raw_models/'  # Path to the PHOENIX models
 
