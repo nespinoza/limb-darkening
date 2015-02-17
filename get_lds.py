@@ -1146,7 +1146,7 @@ fout.write('# DISCLAIMER: If you make use of this code for your research, please
 fout.write('# \n')
 fout.write('#---------------------------------------------------------------------------------------------------------------------------------------------\n')
 fout.write('# Name\tLD fit\tRF\tT_eff\tlog(g)\t[M/H]\tvturb\ta       \tu1      \tu2      \tb1      \tb2      \tb3      \tc1      \t c2'+\
-              '      \tc3      \tc4      \tl1      \tl2      \te1      \te2      \ts1      \ts2      \n')
+              '      \tc3      \tc4      \tl1      \tl2      \te1      \te2              \ts1      \ts2      \n')
 
 f = open(input_filename,'r')
 ok = True
