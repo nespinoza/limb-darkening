@@ -1,0 +1,13 @@
+#
+# EXAMPLE INPUT FILE
+# ------------------
+#
+# Example input file used to obtain the limb-darkening coefficients for
+# a star with Teff = 5500 K, logg = 4.5, M/H = 0.0, vturb = 2 km/s 
+# with the Kepler HIRES response function (RF = KpHiRes), the fitting method 
+# of Claret & Bloemen (2011; a.k.a. CB11, FT = A100, P100) and were all the 
+# bandpass is used (min_w = -1, max_w = -1) using both ATLAS and PHOENIX models
+#
+# Name	Teff	logg	M/H	vturb	RF	FT      	min_w	max_w
+#
+My_star	5500.0	4.5	0.0	2.0	KpHiRes	A100,P100	-1	-1
