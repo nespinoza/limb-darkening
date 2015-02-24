@@ -98,3 +98,17 @@ OUTPUTS
 The code will generate limb-darkening coefficients for the given targets in the 
 input file under the "results" folder. Each file has a description for each column; see 
 the example files in that folder for an example output.
+
+
+Frequently Asked Questions (FAQ)
+--------------------------------
+
+Q: Why are you not including my favorite bandpass (e.g., ugriz, UBVRI) in the "Standard" response functions?
+
+A: Thi is because the actual response function of your favorite bandpass depends not only on the filter being used, 
+   but also on the properties of the mirrors, lenses, etc. being used by your favorite instrument. The 
+   "Standard" response functions, on the other hand, have all that in consideration in the final response 
+   function curves given here. Although some authors have decided to assume some coatings of the mirrors being 
+   used and using that provide response functions for some of the most common filters, we have decided not to 
+   do this in order to force the users to measure or ask for the real response functions being measured by 
+   the different instrument being used, which can dramatically affect the final limb-darkening coefficients.
