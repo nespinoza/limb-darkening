@@ -105,7 +105,7 @@ Frequently Asked Questions (FAQ)
 
 Q: *Why are you not including my favorite bandpass (e.g., ugriz, UBVRI) in the "Standard" response functions?*
 
-A: This is because the actual response function of your favorite bandpass depends not only on the filter being used, 
+A: This is because the actual response function of your favorite instrument depends not only on the filter being used, 
    but also on the properties of the mirrors, lenses, etc. being used by your favorite instrument. The 
    "Standard" response functions, on the other hand, have all that in consideration in the final response 
    function curves given here. Although some authors have decided to assume some coatings of the mirrors being 
