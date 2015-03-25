@@ -6,7 +6,7 @@ This code assumes you don't have the ATLAS and PHOENIX model atmospheres in your
 them depending on your specific needs. However, if you already have models, you can create a new folder 
 called "atlas_models/raw_models" for ATLAS and "phoenix_models/raw_models" for PHOENIX.
 
-If you use this code for your research, please consider citing Espinoza & Jordan (2015).
+If you use this code for your research, please consider citing Espinoza & Jordan (2015; http://arxiv.org/abs/1503.07020).
 
 DEPENDENCIES
 ------------
