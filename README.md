@@ -67,10 +67,15 @@ the following input data separated by *TABS* (see the "input_files" folder for a
                   P100: LDs using PHOENIX models and interpolating 100 mu-points 
                         with cubic spline (i.e., like Claret & Bloemen, 2011)
 
+
+                  All the PHOENIX limb-darkening coefficients are calculated in 
+                  order to be comparable to plane-parallel models (see Section 
+                  2.2 in Espinoza & Jordan, 2015).
+
                   You can indicate various fitting techniques at the same time per 
                   target. For example, if for one target you want all the methods 
                   to be calculated, just put:  A17,A100,AS,P in that column.
-
+	
     min_w:        Minimum wavelength of the bin you wish to integrate. If set to 
                   -1, all the filter passband will be integrated.
 
