@@ -21,11 +21,12 @@ output_filename = 'output_lds.dat'
 # Order of the interpolation done for sampling intensities:
 interpolation_order = 1
 
-# Define if you will apply the corrections or not.
-# If True, convert ATLAS intensities using c/lambda**2 and perform
-# photon counting correction, lambda/hc. If using PHOENIX intensities,
-# apply photon counting correction:
-correction = True
+# Define if you will apply the corrections or not. First the ATLAS one,
+# if True, convert ATLAS intensities using c/lambda**2 (ATLAS intensities 
+# are given per frequency):
+atlas_correction = True
+# Now decide if you want to apply photon counting correction, lambda/hc:
+photon_correction = True
 
 ##############################################################################################################################################
 # This is just in case you want to run everything from command line:
@@ -835,7 +836,8 @@ def read_PHOENIX(chosen_path):
     I = data.transpose()
     return wavelengths, I, mu
 
-def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, correction, interpolation_order, model):
+def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
+                             atlas_correction, photon_correction, interpolation_order, model):
     # Define the number of mu angles at which we will perform the integrations:
     if(model == "A100"):
       nmus = len(mu100)
@@ -855,16 +857,24 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, corr
        if type(S_res) is list:
 	  integration_results = 0.0
 	  for j in range(len(S_res)):
-	      if correction:
-		 integrand = (S_res[j]*Ifunc(S_wav[j]))/S_wav[j]
-	      else:
+	      if atlas_correction and photon_correction:
+		 integrand = (S_res[j]*Ifunc(S_wav[j])) / S_wav[j]
+	      elif atlas_correction and not photon correction:
+                 integrand = (S_res[j]*Ifunc(S_wav[j])) / (S_wav[j]**2)
+              elif not atlas_correction and photon_correction:
+                 integrand = (S_res[j]*Ifunc(S_wav[j])) * (S_wav[j])
+              else:
 		 integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
 	      integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
        else:
-	  if correction:
-	     integrand = (S_res*Ifunc(S_wav))/S_wav        # We want the integral of Intensity_nu*(Response Function*lambda)*c/lambda**2
-	  else:
-	     integrand = S_res*Ifunc(S_wav)*S_wav
+	  if atlas_correction and photon_correction:
+	     integrand = (S_res*Ifunc(S_wav)) / S_wav    
+          elif atlas_correction and not photon correction:
+             integrand = (S_res*Ifunc(S_wav)) / (S_wav**2)
+	  elif not atlas_correction and photon_correction:
+	     integrand = S_res*Ifunc(S_wav) * S_wav
+          else:
+             integrand = S_res*Ifunc(S_wav)
 	  integration_results = np.trapz(integrand, x=S_wav)
        I_l = np.append(I_l,integration_results)
 
@@ -935,7 +945,8 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
 	   I100 = np.vstack((I100,intensities100))
     return mu100,I100
 
-def save_lds(fout, name, response_function, model, correction, s_met, s_grav, s_teff, s_vturb, min_w=None,max_w=None):
+def save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
+             s_met, s_grav, s_teff, s_vturb, min_w=None,max_w=None):
     """
     SAVE LDS
 
@@ -952,7 +963,10 @@ def save_lds(fout, name, response_function, model, correction, s_met, s_grav, s_
 
      model:                  Model atmosphere to be used.
 
-     correction:             True if corrections in the integrand of the intensities should be applied (e.g., c/lambda**2 for the case of ATLAS).
+     atlas_correction:       True if corrections in the integrand of the ATLAS models should be applied (i.e., transformation
+                             of ATLAS intensities given in frequency to per wavelength)
+
+     photon_correction:      If True, correction for photon-counting devices is used.
 
      s_met:                  Metallicity of the star.
      
@@ -999,7 +1013,8 @@ def save_lds(fout, name, response_function, model, correction, s_met, s_grav, s_
 
        # Now use these intensities to obtain the (normalized) integrated intensities with 
        # the response function:
-       I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, correction, interpolation_order,model)
+       I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
+                                     atlas_correction, photon_correction, interpolation_order,model)
   
        # Finally, obtain the limb-darkening coefficients:
        if(model == "AS"):
@@ -1056,7 +1071,7 @@ def save_lds(fout, name, response_function, model, correction, s_met, s_grav, s_
 
        # Now use these intensities to obtain the (normalized) integrated intensities with 
        # the response function:
-       I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction, interpolation_order)
+       I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, photon_correction, interpolation_order)
 
        # Obtain correction due to spherical extension. First, obtain the value of r_max:
        r, fine_r_max = get_rmax(mu,I0)
@@ -1073,7 +1088,7 @@ def save_lds(fout, name, response_function, model, correction, s_met, s_grav, s_
        # intensities:
        if(model == 'P100'):
           mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
-          I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100, S_res, S_wav, correction, interpolation_order)
+          I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100, S_res, S_wav, photon_correction, interpolation_order)
        
        # Now define each possible model and fit LDs:
        if(model == 'PQS'): # Quasi-spherical model, as defined by Claret et al. (2012), mu>=0.1
@@ -1177,7 +1192,8 @@ while(ok):
      response_function = RF
      models = FT.split(',')
      for model in models:
-         out = save_lds(fout, name, response_function, model, correction, s_met, s_grav, s_teff, s_vturb, min_w,max_w)
+         out = save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
+                        s_met, s_grav, s_teff, s_vturb, min_w,max_w)
          if(out==-1):
             print 'Error with target '+name+'. Not saved...'
 
