@@ -859,7 +859,7 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
 	  for j in range(len(S_res)):
 	      if atlas_correction and photon_correction:
 		 integrand = (S_res[j]*Ifunc(S_wav[j])) / S_wav[j]
-	      elif atlas_correction and not photon correction:
+	      elif atlas_correction and not photon_correction:
                  integrand = (S_res[j]*Ifunc(S_wav[j])) / (S_wav[j]**2)
               elif not atlas_correction and photon_correction:
                  integrand = (S_res[j]*Ifunc(S_wav[j])) * (S_wav[j])
@@ -869,7 +869,7 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
        else:
 	  if atlas_correction and photon_correction:
 	     integrand = (S_res*Ifunc(S_wav)) / S_wav    
-          elif atlas_correction and not photon correction:
+          elif atlas_correction and not photon_correction:
              integrand = (S_res*Ifunc(S_wav)) / (S_wav**2)
 	  elif not atlas_correction and photon_correction:
 	     integrand = S_res*Ifunc(S_wav) * S_wav
