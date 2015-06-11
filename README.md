@@ -43,7 +43,6 @@ the following input data separated by *TABS* (see the "input_files" folder for a
                   KpLowRes : Kepler LOWRES
                   IRAC1    : Spitzer IRAC1
                   IRAC2    : Spitzer IRAC2
-                  WFC3     : Hubble Space Telescope WFC3
 
                   It can also be a filename, in which case the response function
                   with that filename must be in the "response_functions" folder. 
