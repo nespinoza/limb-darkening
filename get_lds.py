@@ -452,8 +452,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
        met_dir = 'p'+met_string[0]+met_string[1]
 
     print '\t    + Checking if ATLAS model file is on the system...'
-    if os.path.exists('atlas_models/raw_models/'+met_dir+'/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck') or \
-       os.path.exists('atlas_models/raw_models/'+met_dir+'/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
+    if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck') or \
+       os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
        print '\t    + Model file found!'
     else:
        # If not in the system, download it from Kurucz's website. First, check all possible
@@ -480,21 +480,21 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 	       hasnew = True
                gotit = True
 	       downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
-               if os.path.exists('atlas_models/raw_models/'+met_dir):
-                  os.rename(afname,'atlas_models/raw_models/'+met_dir+'/'+afname)
+               if os.path.exists('atlas_models/raw_models/'):
+                  os.rename(afname,'atlas_models/raw_models/'+afname)
                else:
-                  os.mkdir('atlas_models/raw_models/'+met_dir)
-                  os.rename(afname,'atlas_models/raw_models/'+met_dir+'/'+afname)
+                  os.mkdir('atlas_models/raw_models/')
+                  os.rename(afname,'atlas_models/raw_models/'+afname)
        if(not hasnew):
 	  for afname in filenames:
 	       if ('.pck19' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
                   gotit = True
 		  downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
-                  if os.path.exists('atlas_models/raw_models/'+met_dir):
-                     os.rename(afname,'atlas_models/raw_models/'+met_dir+'/'+afname)
+                  if os.path.exists('atlas_models/raw_models/'):
+                     os.rename(afname,'atlas_models/raw_models/'+afname)
                   else:
-                     os.mkdir('atlas_models/raw_models/'+met_dir)
-                     os.rename(afname,'atlas_models/raw_models/'+met_dir+'/'+afname)
+                     os.mkdir('atlas_models/raw_models/')
+                     os.rename(afname,'atlas_models/raw_models/'+afname)
        
        if not gotit:
           print '\t > No model with closest metallicity of '+str(chosen_met)+' and closest vturb of '+str(chosen_vturb)+' km/s found.'
@@ -504,10 +504,10 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     # Now, check if the models in machine readable form have been generated. If not, generate them:
     if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
 	    # Now read the file:
-	    if os.path.exists('atlas_models/raw_models/'+met_dir+'/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck'):
-	       lines = getFileLines('atlas_models/raw_models/'+met_dir+'/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck')
+	    if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck'):
+	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck')
 	    else: 
-	       lines = getFileLines('atlas_models/raw_models/'+met_dir+'/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19')
+	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19')
 
             # Create folder for current metallicity and turbulent velocity:
             os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
