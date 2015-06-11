@@ -117,3 +117,9 @@ A: This is because the actual response function of your favorite instrument depe
    used and using that provide response functions for some of the most common filters, we have decided not to 
    do this in order to force the users to measure or ask for the real response functions being measured by 
    the different instrument being used, which can dramatically affect the final limb-darkening coefficients.
+
+Q: *Why are the HST bandpasses not in the repository anymore?*
+
+A: Because the updated versions can be obtained via PySynphot (http://ssb.stsci.edu/pysynphot/docs/index.html). 
+   Furthermore, those vary with time, so the response function that you should use is the one corresponding to 
+   the dates of your observations!

@@ -745,15 +745,6 @@ def get_response(min_w, max_w, response_function):
          print '\t > IRAC response file detected. Changing from microns to Angstroms...'
          print '\t > Minimum wavelength:',min(w),'A'
          print '\t > Maximum wavelength:',max(w),'A'
-    elif('WFC3' in response_file):
-         w = 1e4*w
-         print '\t > WFC3 response file detected. Changing from microns to Angstroms...'
-         if min_w is None:
-            min_w = min(w)
-         if max_w is None:
-            max_w = max(w)
-         print '\t > Minimum wavelength:',min_w,'A'
-         print '\t > Maximum wavelength:',max_w,'A'
     else:
          if min_w is None:
             min_w = min(w)
