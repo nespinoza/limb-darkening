@@ -453,7 +453,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 
     print '\t    + Checking if ATLAS model file is on the system...'
     if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck') or \
-       os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
+       os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19') or \
+       os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck'):
        print '\t    + Model file found!'
     else:
        # If not in the system, download it from Kurucz's website. First, check all possible
@@ -495,7 +496,16 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                   else:
                      os.mkdir('atlas_models/raw_models/')
                      os.rename(afname,'atlas_models/raw_models/'+afname)
-       
+	  if not gotit:
+		  for afname in filenames:
+			  if met_dir+'k'+str(int(chosen_vturb))+'.pck' in afname:
+				  gotit = True
+				  downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
+				  if os.path.exists('atlas_models/raw_models/'):
+					  os.rename(afname,'atlas_models/raw_models/'+afname)
+				  else:
+					  os.mkdir('atlas_models/raw_models/')
+					  os.rename(afname,'atlas_models/raw_models/'+afname)       
        if not gotit:
           print '\t > No model with closest metallicity of '+str(chosen_met)+' and closest vturb of '+str(chosen_vturb)+' km/s found.'
           print '\t   Please, modify the input values of the target and select other stellar parameters for it.'
@@ -506,8 +516,10 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 	    # Now read the file:
 	    if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck'):
 	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck')
-	    else: 
+	    elif os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
 	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19')
+	    else:
+	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck')
 
             # Create folder for current metallicity and turbulent velocity:
             os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
