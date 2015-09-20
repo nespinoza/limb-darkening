@@ -24,7 +24,8 @@ USAGE
 -----
 
 Before running the code, you must generate a file in the "input_files" directory with 
-the following input data separated by *TABS* (see the "input_files" folder for an example input file):
+the following input data separated by tabs or spaces (see the "input_files" folder for 
+an example input file):
 
     Name:         Target name.
 
