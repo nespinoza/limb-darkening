@@ -13,10 +13,10 @@ import urllib2
 ################################################################## OPTIONS ###################################################################
 
 # Filename with the stellar information, wavelengths of integration, etc:
-input_filename = 'input_files/example_input_file.dat'               
+input_filename = 'input_files/kepler_example.dat'               
 
 # Filename of the output (which will contain the lds):
-output_filename = 'output_lds.dat'
+output_filename = 'kepler_example.dat'
 
 # Order of the interpolation done for sampling intensities:
 interpolation_order = 1
@@ -338,68 +338,66 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 
     def getFileLines(fname):
         f = open(fname,'r')
-	l = f.readline()
-	idx = l.find('\n')
-	if(idx==-1):
-	   lines = l.split('\r')
-	else:
-	   f.close()
-	   f = open(fname,'r')
-	   l = f.read()
-	   lines = l.split('\n')
-	f.close()
-	return lines
+        l = f.readline()
+        idx = l.find('\n')
+        if(idx==-1):
+            lines = l.split('\r')
+        else:
+            f.close()
+            f = open(fname,'r')
+            l = f.read()
+            lines = l.split('\n')
+        f.close()
+        return lines
 
     def getATLASStellarParams(lines):
-	for i in range(len(lines)):
-	    line = lines[i]
-	    idx = line.find('EFF')
-	    if(idx!=-1):
-	       idx2 = line.find('GRAVITY')
-	       TEFF = (line[idx+4:idx2-1])
-	       GRAVITY = (line[idx2+8:idx2+8+5])
-	       #idx = line.find('VTURB')
-	       #idx2 = line.find('KM/S')
-	       VTURB = (line[idx+6:idx2])
-	       idx = line.find('L/H')
-	       if(idx==-1):
-		  LH = '1.25'
-	       else:
-		  LH = line[idx+4:]
-	       break
-	return str(int(np.double(TEFF))),str(np.round(np.double(GRAVITY),2)),str(np.round(np.double(LH),2))
+        for i in range(len(lines)):
+            line = lines[i]
+            idx = line.find('EFF')
+            if(idx!=-1):
+                idx2 = line.find('GRAVITY')
+                TEFF = (line[idx+4:idx2-1])
+                GRAVITY = (line[idx2+8:idx2+8+5])
+                VTURB = (line[idx+6:idx2])
+                idx = line.find('L/H')
+                if(idx==-1):
+                    LH = '1.25'
+                else:
+                    LH = line[idx+4:]
+                break
+        return str(int(np.double(TEFF))),str(np.round(np.double(GRAVITY),2)),str(np.round(np.double(LH),2))
 
     def getIntensitySteps(lines):
-	for j in range(len(lines)):
-	    line = lines[j]
-	    idx = line.find('intervals')
-	    if(idx!=-1):
-	       line = lines[j+1]
-	       intervals = line.split(' ')
-	       break
+        for j in range(len(lines)):
+            line = lines[j]
+            idx = line.find('intervals')
+            if(idx!=-1):
+                line = lines[j+1]
+                intervals = line.split(' ')
+                break
 
-	s = FixSpaces(intervals)
-	return j+2,s
+        s = FixSpaces(intervals)
+        return j+2,s
 
     def FixSpaces(intervals):
-	s = ''
-	ok = True
-	i = 0
-	while(ok):
-	    if(intervals[i]==''):
-	       intervals.pop(i)
-	    else:
-	       i=i+1
-	       if(len(intervals)==i):
-		  break
-	    if(len(intervals)==i):
-	       break
-	for i in range(len(intervals)):
-	    if(i!=len(intervals)-1):
-	       s=s+str(np.double(intervals[i]))+'\t'
-	    else:
-	       s=s+str(np.double(intervals[i]))+'\n'
-	return s
+        s = ''
+        ok = True
+        i = 0
+        while(ok):
+            if(intervals[i]==''):
+                intervals.pop(i)
+            else:
+                i=i+1
+                if(len(intervals)==i):
+                    break
+            if(len(intervals)==i):
+                break
+        for i in range(len(intervals)):
+            if(i!=len(intervals)-1):
+                s=s+str(np.double(intervals[i]))+'\t'
+            else:
+                s=s+str(np.double(intervals[i]))+'\n'
+        return s
 
 
     # This is the list of all the available metallicities in Kurucz's website:
@@ -431,11 +429,11 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
        m_diff = np.inf
        chosen_met = np.inf
        for met in possible_mets:
-           # Estimate distance between current and input metallicity:
-   	   c_m_diff = np.abs(met-s_met)
-	   if(c_m_diff<m_diff):
-	      chosen_met = met
-              m_diff = copy(c_m_diff)
+            # Estimate distance between current and input metallicity:
+            c_m_diff = np.abs(met-s_met)
+            if(c_m_diff<m_diff):
+                chosen_met = met
+                m_diff = copy(c_m_diff)
 
        print '\t > For input metallicity '+str(s_met)+', closest metallicity is '+str(chosen_met)+'.'
     else:
@@ -455,100 +453,99 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck') or \
        os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19') or \
        os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck'):
-       print '\t    + Model file found!'
+        print '\t    + Model file found!'
     else:
-       # If not in the system, download it from Kurucz's website. First, check all possible
-       # files to download:
-       print '\t    + Model file not found.'
-       response = urllib2.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/') 
-       html = response.read()
-       ok = True
-       filenames = []
-       while(ok):
-	 idx = html.find('>i'+met_dir.lower())
-	 if(idx==-1):
-	    ok = False
-	 else:
-	    for i in range(30):
-		if(html[idx+i]=='<'):
-		    filenames.append(html[idx+1:idx+i])
-	 html = html[idx+1:]
-       hasnew = False
-       gotit = False
-       # For each filename, check that it has the desired vturb and prefer *new* models:
-       for afname in filenames:
-	   if ('new' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
-	       hasnew = True
-               gotit = True
-	       downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
-               if os.path.exists('atlas_models/raw_models/'):
-                  os.rename(afname,'atlas_models/raw_models/'+afname)
-               else:
-                  os.mkdir('atlas_models/raw_models/')
-                  os.rename(afname,'atlas_models/raw_models/'+afname)
-       if(not hasnew):
-	  for afname in filenames:
-	       if ('.pck19' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
-                  gotit = True
-		  downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
-                  if os.path.exists('atlas_models/raw_models/'):
-                     os.rename(afname,'atlas_models/raw_models/'+afname)
-                  else:
-                     os.mkdir('atlas_models/raw_models/')
-                     os.rename(afname,'atlas_models/raw_models/'+afname)
-	  if not gotit:
-		  for afname in filenames:
-			  if met_dir+'k'+str(int(chosen_vturb))+'.pck' in afname:
-				  gotit = True
-				  downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
-				  if os.path.exists('atlas_models/raw_models/'):
-					  os.rename(afname,'atlas_models/raw_models/'+afname)
-				  else:
-					  os.mkdir('atlas_models/raw_models/')
-					  os.rename(afname,'atlas_models/raw_models/'+afname)       
-       if not gotit:
-          print '\t > No model with closest metallicity of '+str(chosen_met)+' and closest vturb of '+str(chosen_vturb)+' km/s found.'
-          print '\t   Please, modify the input values of the target and select other stellar parameters for it.'
-          sys.exit() 
+        # If not in the system, download it from Kurucz's website. First, check all possible
+        # files to download:
+        print '\t    + Model file not found.'
+        response = urllib2.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/') 
+        html = response.read()
+        ok = True
+        filenames = []
+        while(ok):
+            idx = html.find('>i'+met_dir.lower())
+            if(idx==-1):
+                ok = False
+            else:
+                for i in range(30):
+                    if(html[idx+i]=='<'):
+                        filenames.append(html[idx+1:idx+i])
+            html = html[idx+1:]
+        hasnew = False
+        gotit = False
+        # For each filename, check that it has the desired vturb and prefer *new* models:
+        for afname in filenames:
+            if ('new' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
+                hasnew = True
+                gotit = True
+                downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
+                if os.path.exists('atlas_models/raw_models/'):
+                    os.rename(afname,'atlas_models/raw_models/'+afname)
+                else:
+                    os.mkdir('atlas_models/raw_models/')
+                    os.rename(afname,'atlas_models/raw_models/'+afname)
+        if(not hasnew):
+            for afname in filenames:
+                if ('.pck19' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
+                    gotit = True
+                    downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
+                    if os.path.exists('atlas_models/raw_models/'):
+                        os.rename(afname,'atlas_models/raw_models/'+afname)
+                    else:
+                        os.mkdir('atlas_models/raw_models/')
+                        os.rename(afname,'atlas_models/raw_models/'+afname)
+            if not gotit:
+                for afname in filenames:
+                    if met_dir+'k'+str(int(chosen_vturb))+'.pck' in afname:
+                        gotit = True
+                        downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
+                        if os.path.exists('atlas_models/raw_models/'):
+                            os.rename(afname,'atlas_models/raw_models/'+afname)
+                        else:
+                            os.mkdir('atlas_models/raw_models/')
+                            os.rename(afname,'atlas_models/raw_models/'+afname)       
+        if not gotit:
+            print '\t > No model with closest metallicity of '+str(chosen_met)+' and closest vturb of '+str(chosen_vturb)+' km/s found.'
+            print '\t   Please, modify the input values of the target and select other stellar parameters for it.'
+            sys.exit() 
 
     # Now, check if the models in machine readable form have been generated. If not, generate them:
     if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
-	    # Now read the file:
-	    if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck'):
-	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck')
-	    elif os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
-	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19')
-	    else:
-	       lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck')
+        # Now read the file:
+        if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck'):
+            lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck')
+        elif os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
+            lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19')
+        else:
+            lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck')
 
-            # Create folder for current metallicity and turbulent velocity:
-            os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
-	    # Save files in the folder:
-	    while True: 
-		  TEFF,GRAVITY,LH = getATLASStellarParams(lines)
-                  if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF):
-                     os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF)
-		  idx,mus = getIntensitySteps(lines)
-                  f = open('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat','w')
-                  f.write('#TEFF:'+TEFF+' METALLICITY:'+met_dir+' GRAVITY:'+GRAVITY+' VTURB:'+str(int(chosen_vturb))+' L/H: '+LH+'\n')
-                  f.write('#wav (nm) \t cos(theta):'+mus)
-		  for i in range(idx,len(lines)):
-		      line = lines[i]
-		      idx = line.find('EFF')
-		      idx2 = line.find('\x0c')
-		      if(idx2!=-1 or line==''):
-			 #print 'Bad line at '+str(i)
-			 hhhh=1
-		      elif(idx!=-1):
-			 lines = lines[i:]
-			 break
-		      else:
-			 wav_p_intensities = line.split(' ')
-			 s = FixSpaces(wav_p_intensities)
-			 f.write(s+'\n')
-		  f.close()
-		  if(i==len(lines)-1):
-		     break
+        # Create folder for current metallicity and turbulent velocity:
+        os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
+        # Save files in the folder:
+        while True: 
+            TEFF,GRAVITY,LH = getATLASStellarParams(lines)
+            if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF):
+                os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF)
+            idx,mus = getIntensitySteps(lines)
+            f = open('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat','w')
+            f.write('#TEFF:'+TEFF+' METALLICITY:'+met_dir+' GRAVITY:'+GRAVITY+' VTURB:'+str(int(chosen_vturb))+' L/H: '+LH+'\n')
+            f.write('#wav (nm) \t cos(theta):'+mus)
+            for i in range(idx,len(lines)):
+                line = lines[i]
+                idx = line.find('EFF')
+                idx2 = line.find('\x0c')
+                if(idx2!=-1 or line==''):
+                    hhhh=1
+                elif(idx!=-1):
+                    lines = lines[i:]
+                    break
+                else:
+                    wav_p_intensities = line.split(' ')
+                    s = FixSpaces(wav_p_intensities)
+                    f.write(s+'\n')
+            f.close()
+            if(i==len(lines)-1):
+                break
 
     # Now, assuming models are written in machine readable form, we can work:
     chosen_met_folder = 'atlas_models/'+met_dir+'k'+str(int(chosen_vturb))
@@ -559,13 +556,13 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     chosen_teff_folder = ''
     tefffolders = glob.glob(chosen_met_folder+'/*')
     for tefffolder in tefffolders:
-	fname = tefffolder.split('/')[-1]
-	teff = np.double(fname)
-	c_t_diff = abs(teff-s_teff)
-	if(c_t_diff<t_diff):
-	   chosen_teff = teff
-	   chosen_teff_folder = tefffolder
-	   t_diff = c_t_diff
+        fname = tefffolder.split('/')[-1]
+        teff = np.double(fname)
+        c_t_diff = abs(teff-s_teff)
+        if(c_t_diff<t_diff):
+            chosen_teff = teff
+            chosen_teff_folder = tefffolder
+            t_diff = c_t_diff
 
     print '\t    + For input effective temperature '+str(s_teff)+', closest effective temperature is '+str(chosen_teff)+'.'
     # Now check closest gravity and turbulent velocity:
@@ -575,12 +572,12 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     all_files = glob.glob(chosen_teff_folder+'/*')
 
     for filename in all_files:
-	grav = np.double((filename.split('grav')[1]).split('_')[1])
-	c_g_diff = abs(grav-s_grav)
-	if(c_g_diff<grav_diff):
-	   chosen_grav = grav
-	   grav_diff = c_g_diff
-           chosen_filename = filename
+        grav = np.double((filename.split('grav')[1]).split('_')[1])
+        c_g_diff = abs(grav-s_grav)
+        if(c_g_diff<grav_diff):
+            chosen_grav = grav
+            grav_diff = c_g_diff
+            chosen_filename = filename
 
     print '\t    + For input metallicity '+str(s_met)+', effective temperature '+str(s_teff)+' K, and '
     print '\t      log-gravity '+str(s_grav)+', and turbulent velocity '+str(s_vturb)+' km/s, closest '
@@ -613,32 +610,32 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     possible_mets = np.array([0.0, -0.5, -1.0, 1.0, -1.5, -2.0, -3.0, -4.0])
 
     if s_met not in possible_mets:
-       # Now check closest metallicity model for input star:
-       m_diff = np.inf
-       chosen_met = np.inf
-       for met in possible_mets:
-	   # Estimate distance between current and input metallicity:
-	   c_m_diff = np.abs(met-s_met)
-	   if(c_m_diff<m_diff):
-	      chosen_met = met
-	      m_diff = copy(c_m_diff)
+        # Now check closest metallicity model for input star:
+        m_diff = np.inf
+        chosen_met = np.inf
+        for met in possible_mets:
+            # Estimate distance between current and input metallicity:
+            c_m_diff = np.abs(met-s_met)
+            if(c_m_diff<m_diff):
+                chosen_met = met
+                m_diff = copy(c_m_diff)
 
-       print '\t    + For input metallicity '+str(s_met)+', closest metallicity is '+str(chosen_met)+'.'
+        print '\t    + For input metallicity '+str(s_met)+', closest metallicity is '+str(chosen_met)+'.'
     else:
-       chosen_met = s_met
+        chosen_met = s_met
 
     # Generate the folder name:
     if chosen_met == 0.0:
-       met_folder = 'm00'
-       model = 'Z-0.0'
+        met_folder = 'm00'
+        model = 'Z-0.0'
     else:
-       abs_met = str(np.abs(chosen_met)).split('.')
-       if chosen_met<0:
-	  met_folder = 'm'+abs_met[0]+abs_met[1]
-	  model = 'Z-'+abs_met[0]+abs_met[1]
-       else:
-	  met_folder = 'p'+abs_met[0]+abs_met[1]
-	  model = 'Z+'+abs_met[0]+abs_met[1]
+        abs_met = str(np.abs(chosen_met)).split('.')
+        if chosen_met<0:
+            met_folder = 'm'+abs_met[0]+abs_met[1]
+            model = 'Z-'+abs_met[0]+abs_met[1]
+        else:
+            met_folder = 'p'+abs_met[0]+abs_met[1]
+            model = 'Z+'+abs_met[0]+abs_met[1]
 
     chosen_met_folder = model_path+met_folder
 
@@ -659,45 +656,45 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
        html = response.read()
        all_files = []
        while True:
-	     idx = html.find('lte')
-	     if(idx==-1):
-		break
-	     else:
-		idx2 = html.find('.fits')
-		all_files.append(html[idx:idx2+5])
-	     html = html[idx2+5:]
+            idx = html.find('lte')
+            if(idx==-1):
+                break
+            else:
+                idx2 = html.find('.fits')
+                all_files.append(html[idx:idx2+5])
+            html = html[idx2+5:]
        f = open('file_list.dat','w')
        for file in all_files:
-	   f.write(file+'\n')
+            f.write(file+'\n')
        f.close()
     # Now check closest Teff for input star:
     t_diff = np.inf
     chosen_teff = np.inf
     for file in all_files:
-	teff = np.double(file[3:8])
-	c_t_diff = abs(teff-s_teff)
-	if(c_t_diff<t_diff):
-	   chosen_teff = teff
-	   t_diff = c_t_diff
+        teff = np.double(file[3:8])
+        c_t_diff = abs(teff-s_teff)
+        if(c_t_diff<t_diff):
+            chosen_teff = teff
+            t_diff = c_t_diff
 
     print '\t    + For input effective temperature '+str(s_teff)+', closest effective temperature is '+str(chosen_teff)+'.'
 
     teff_files = []
     for file in all_files:
-	if str(int(chosen_teff)) in file:
-	    teff_files.append(file)
+        if str(int(chosen_teff)) in file:
+            teff_files.append(file)
 
     # Now check closest gravity:
     grav_diff = np.inf
     chosen_grav = np.inf
     chosen_fname = ''
     for file in teff_files:
-	grav = np.double(file[9:13])
-	c_g_diff = abs(grav-s_grav)
-	if(c_g_diff<grav_diff):
-	   chosen_grav = grav
-	   grav_diff = c_g_diff
-	   chosen_fname = file
+        grav = np.double(file[9:13])
+        c_g_diff = abs(grav-s_grav)
+        if(c_g_diff<grav_diff):
+            chosen_grav = grav
+            grav_diff = c_g_diff
+            chosen_fname = file
 
     print '\t    + For input metallicity '+str(s_met)+', effective temperature '+str(s_teff)+' K, and '
     print '\t      log-gravity '+str(s_grav)+', closest combination is metallicity: '+str(chosen_met)+', '
@@ -709,10 +706,10 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     print '\t    + Checking if PHOENIX model file is on the system...'
     # Check if file is already downloaded. If not, download it from the PHOENIX website:
     if not os.path.exists(chosen_fname):
-	print '\t    + Model file not found.'
-	downloader('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/'+chosen_fname)
+        print '\t    + Model file not found.'
+        downloader('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/'+chosen_fname)
     else:
-	print '\t    + Model file found!'
+        print '\t    + Model file found!'
 
     os.chdir(cwd)
     chosen_path = chosen_met_folder + '/'+chosen_fname
@@ -797,37 +794,37 @@ def read_ATLAS(chosen_filename, model):
     f = open(chosen_filename,'r')
     counter = 0
     while(True):
-       l = f.readline()
-       if(l==''):
-	  break
-       # If no jump of line or comment, save the intensities:
-       if(l[0]!='#' and l[:3]!='\n'):
-	  splitted = l.split('\t')
-	  if(len(splitted)==18):
-	     splitted[-1] = (splitted[-1])[:-1]                                  # The last one always has a jump of line (\n), so erase it.
-	     wavelength = np.double(splitted[0])*10                              # Convert wavelengths, which are in nanometers, to angstroms.
-	     intensities = np.double(np.array(splitted[1:]))                     # Get the intensities.
-	     ndigits = len(str(int(intensities[1])))
-	     # Only if I(1) is different from zero, fit the LDs:
-	     if(intensities[0]!=0.0):
-		intensities[1:] = intensities[1:]/1e5                            # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
-		intensities[1:] = intensities[1:]*intensities[0]                 # All the rest of the intensities are normalized w/r to the center one.
-                # If we want, we extract the 100 interpolated mu-points:
-		if(model == 'A100'):
-		   II = UnivariateSpline(mu[::-1],intensities[::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
-		   intensities100 = II(mu100)
-                   # And stack the intensities in the I100 array:
-                   if(counter == 0):
-                      I100 = intensities100
-                   else:
-                      I100 = np.vstack((I100,intensities100))
-		# Now we stack the original intensities in the I array:
-		if(counter == 0):
-		   I = intensities
-		else:
-		   I = np.vstack((I,intensities))
-		wavelengths = np.append(wavelengths,wavelength)
-                counter = counter + 1
+        l = f.readline()
+        if(l==''):
+            break
+        # If no jump of line or comment, save the intensities:
+        if(l[0]!='#' and l[:3]!='\n'):
+            splitted = l.split('\t')
+            if(len(splitted)==18):
+                splitted[-1] = (splitted[-1])[:-1]                                  # The last one always has a jump of line (\n), so erase it.
+                wavelength = np.double(splitted[0])*10                              # Convert wavelengths, which are in nanometers, to angstroms.
+                intensities = np.double(np.array(splitted[1:]))                     # Get the intensities.
+                ndigits = len(str(int(intensities[1])))
+                # Only if I(1) is different from zero, fit the LDs:
+                if(intensities[0]!=0.0):
+                    intensities[1:] = intensities[1:]/1e5                            # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
+                    intensities[1:] = intensities[1:]*intensities[0]                 # All the rest of the intensities are normalized w/r to the center one.
+                    # If we want, we extract the 100 interpolated mu-points:
+                    if(model == 'A100'):
+                        II = UnivariateSpline(mu[::-1],intensities[::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+                        intensities100 = II(mu100)
+                        # And stack the intensities in the I100 array:
+                        if(counter == 0):
+                            I100 = intensities100
+                        else:
+                            I100 = np.vstack((I100,intensities100))
+                    # Now we stack the original intensities in the I array:
+                    if(counter == 0):
+                        I = intensities
+                    else:
+                        I = np.vstack((I,intensities))
+                    wavelengths = np.append(wavelengths,wavelength)
+                    counter = counter + 1
     f.close()
     return wavelengths, I, I100,mu, mu100
 
@@ -850,36 +847,36 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
     # Now integrate intensity through each angle:
     I_l = np.array([])
     for i in range(nmus):
-       # Interpolate the intensities:
-       if(model == "A100"):
-	  Ifunc = UnivariateSpline(wavelengths,I100[:,i],s=0,k=interpolation_order)
-       else:
-	  Ifunc = UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
-       # If several wavelength ranges where given, integrate through each chunk one at a time.
-       # If not, integrate the given chunk:
-       if type(S_res) is list:
-	  integration_results = 0.0
-	  for j in range(len(S_res)):
-	      if atlas_correction and photon_correction:
-		 integrand = (S_res[j]*Ifunc(S_wav[j])) / S_wav[j]
-	      elif atlas_correction and not photon_correction:
-                 integrand = (S_res[j]*Ifunc(S_wav[j])) / (S_wav[j]**2)
-              elif not atlas_correction and photon_correction:
-                 integrand = (S_res[j]*Ifunc(S_wav[j])) * (S_wav[j])
-              else:
-		 integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
-	      integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
-       else:
-	  if atlas_correction and photon_correction:
-	     integrand = (S_res*Ifunc(S_wav)) / S_wav    
-          elif atlas_correction and not photon_correction:
-             integrand = (S_res*Ifunc(S_wav)) / (S_wav**2)
-	  elif not atlas_correction and photon_correction:
-	     integrand = S_res*Ifunc(S_wav) * S_wav
-          else:
-             integrand = S_res*Ifunc(S_wav)
-	  integration_results = np.trapz(integrand, x=S_wav)
-       I_l = np.append(I_l,integration_results)
+        # Interpolate the intensities:
+        if(model == "A100"):
+            Ifunc = UnivariateSpline(wavelengths,I100[:,i],s=0,k=interpolation_order)
+        else:
+            Ifunc = UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
+        # If several wavelength ranges where given, integrate through each chunk one at a time.
+        # If not, integrate the given chunk:
+        if type(S_res) is list:
+            integration_results = 0.0
+            for j in range(len(S_res)):
+                if atlas_correction and photon_correction:
+                    integrand = (S_res[j]*Ifunc(S_wav[j])) / S_wav[j]
+                elif atlas_correction and not photon_correction:
+                    integrand = (S_res[j]*Ifunc(S_wav[j])) / (S_wav[j]**2)
+                elif not atlas_correction and photon_correction:
+                    integrand = (S_res[j]*Ifunc(S_wav[j])) * (S_wav[j])
+                else:
+                    integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
+                integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
+        else:
+            if atlas_correction and photon_correction:
+                integrand = (S_res*Ifunc(S_wav)) / S_wav    
+            elif atlas_correction and not photon_correction:
+                integrand = (S_res*Ifunc(S_wav)) / (S_wav**2)
+            elif not atlas_correction and photon_correction:
+                integrand = S_res*Ifunc(S_wav) * S_wav
+            else:
+                integrand = S_res*Ifunc(S_wav)
+            integration_results = np.trapz(integrand, x=S_wav)
+        I_l = np.append(I_l,integration_results)
 
     # Normalize profile with respect to I(mu = 1):
     if(model == "A100"):
@@ -892,23 +889,23 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
 def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction, interpolation_order):
     I_l = np.array([])
     for i in range(len(mu)):
-	Ifunc = UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
-	if type(S_res) is list:
-	   integration_results = 0.0
-	   for j in range(len(S_res)):
-	       if correction:
-		  integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
-	       else:
-		  integrand = S_res[j]*Ifunc(S_wav[j])
-	       integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
+        Ifunc = UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
+        if type(S_res) is list:
+            integration_results = 0.0
+            for j in range(len(S_res)):
+                if correction:
+                    integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
+                else:
+                    integrand = S_res[j]*Ifunc(S_wav[j])
+                integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
 
-	else:
-	   if correction:
-	      integrand = S_res*Ifunc(S_wav)*S_wav     #lambda x,I,S: (I(x)*S(x))*x # We want the integral of Intensity_nu*(Response Function*lambda)*c/lambda**2
-	   else:
-	      integrand = S_res*Ifunc(S_wav)           #lambda x,I,S: I(x)*S(x)
-	   integration_results = np.trapz(integrand, x=S_wav)# integrate.quad(integrand,min_w,max_w, args=(Ifunc,S,),full_output=1)
-	I_l = np.append(I_l,integration_results)
+        else:
+            if correction:
+                integrand = S_res*Ifunc(S_wav)*S_wav     #lambda x,I,S: (I(x)*S(x))*x # We want the integral of Intensity_nu*(Response Function*lambda)*c/lambda**2
+            else:
+                integrand = S_res*Ifunc(S_wav)           #lambda x,I,S: I(x)*S(x)
+            integration_results = np.trapz(integrand, x=S_wav)# integrate.quad(integrand,min_w,max_w, args=(Ifunc,S,),full_output=1)
+        I_l = np.append(I_l,integration_results)
 
     return I_l/(I_l[-1])
 
@@ -938,14 +935,14 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     I100 = np.array([])
     first_time = True
     for i in range(len(wavelengths)):
-	II = UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3) # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
-	intensities100 = II(mu100)
-	# And stack the intensities in the I100 array:
-	if(first_time):
-	   I100 = intensities100
-           first_time = False
-	else:
-	   I100 = np.vstack((I100,intensities100))
+        II = UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3) # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+        intensities100 = II(mu100)
+        # And stack the intensities in the I100 array:
+        if(first_time):
+            I100 = intensities100
+            first_time = False
+        else:
+            I100 = np.vstack((I100,intensities100))
     return mu100,I100
 
 def save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
@@ -1002,58 +999,58 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
 
     if 'A' in model:
 
-       # Now, search for best-match ATLAS9 model for the input stellar parameters:
-       print '\n'
-       print '\t ATLAS modelling'
-       print '\t ---------------\n'
-       print '\t > Searching for best-match Kurucz model...'
-       chosen_filename, chosen_teff, chosen_grav, chosen_met, chosen_vturb = ATLAS_model_search(s_met, s_grav, s_teff, s_vturb)
+        # Now, search for best-match ATLAS9 model for the input stellar parameters:
+        print '\n'
+        print '\t ATLAS modelling'
+        print '\t ---------------\n'
+        print '\t > Searching for best-match Kurucz model...'
+        chosen_filename, chosen_teff, chosen_grav, chosen_met, chosen_vturb = ATLAS_model_search(s_met, s_grav, s_teff, s_vturb)
 
-       # Read wavelengths and intensities (I) from ATLAS models. If model is "A100", it also 
-       # returns the interpolated intensities (I100) and the associated mu values (mu100).
-       # If not, those arrays are empty:
-       wavelengths, I, I100, mu, mu100 = read_ATLAS(chosen_filename, model)
+        # Read wavelengths and intensities (I) from ATLAS models. If model is "A100", it also 
+        # returns the interpolated intensities (I100) and the associated mu values (mu100).
+        # If not, those arrays are empty:
+        wavelengths, I, I100, mu, mu100 = read_ATLAS(chosen_filename, model)
 
-       # Now use these intensities to obtain the (normalized) integrated intensities with 
-       # the response function:
-       I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
+        # Now use these intensities to obtain the (normalized) integrated intensities with 
+        # the response function:
+        I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
                                      atlas_correction, photon_correction, interpolation_order,model)
   
-       # Finally, obtain the limb-darkening coefficients:
-       if(model == "AS"):
-          # Save indexes which apply to Sing's (2010) criterion:
-          idx_sing = np.where(mu>=0.05)[0]
-	  c1,c2,c3,c4 = fit_non_linear(mu,I0)
-	  a = fit_linear(mu[idx_sing],I0[idx_sing])
-	  u1,u2 = fit_quadratic(mu[idx_sing],I0[idx_sing])
-	  b1,b2,b3 = fit_three_parameter(mu[idx_sing],I0[idx_sing])
-	  l1,l2 = fit_logarithmic(mu[idx_sing],I0[idx_sing])
-	  e1,e2 = fit_exponential(mu[idx_sing],I0[idx_sing])
-	  s1,s2 = fit_square_root(mu[idx_sing],I0[idx_sing])
-       elif(model == "A100"):
-          c1,c2,c3,c4 = fit_non_linear(mu100,I0)
-          a = fit_linear(mu100,I0)
-          u1,u2 = fit_quadratic(mu100,I0)
-          b1,b2,b3 = fit_three_parameter(mu100,I0)
-          l1,l2 = fit_logarithmic(mu100,I0)
-          e1,e2 = fit_exponential(mu100,I0)
-          s1,s2 = fit_square_root(mu100,I0)
-       else:
-	  c1,c2,c3,c4 = fit_non_linear(mu,I0)
-	  a = fit_linear(mu,I0)
-	  u1,u2 = fit_quadratic(mu,I0)
-	  b1,b2,b3 = fit_three_parameter(mu,I0)
-	  l1,l2 = fit_logarithmic(mu,I0)
-	  e1,e2 = fit_exponential(mu,I0)
-	  s1,s2 = fit_square_root(mu,I0)
+        # Finally, obtain the limb-darkening coefficients:
+        if(model == "AS"):
+            # Save indexes which apply to Sing's (2010) criterion:
+            idx_sing = np.where(mu>=0.05)[0]
+            c1,c2,c3,c4 = fit_non_linear(mu,I0)
+            a = fit_linear(mu[idx_sing],I0[idx_sing])
+            u1,u2 = fit_quadratic(mu[idx_sing],I0[idx_sing])
+            b1,b2,b3 = fit_three_parameter(mu[idx_sing],I0[idx_sing])
+            l1,l2 = fit_logarithmic(mu[idx_sing],I0[idx_sing])
+            e1,e2 = fit_exponential(mu[idx_sing],I0[idx_sing])
+            s1,s2 = fit_square_root(mu[idx_sing],I0[idx_sing])
+        elif(model == "A100"):
+            c1,c2,c3,c4 = fit_non_linear(mu100,I0)
+            a = fit_linear(mu100,I0)
+            u1,u2 = fit_quadratic(mu100,I0)
+            b1,b2,b3 = fit_three_parameter(mu100,I0)
+            l1,l2 = fit_logarithmic(mu100,I0)
+            e1,e2 = fit_exponential(mu100,I0)
+            s1,s2 = fit_square_root(mu100,I0)
+        else:
+            c1,c2,c3,c4 = fit_non_linear(mu,I0)
+            a = fit_linear(mu,I0)
+            u1,u2 = fit_quadratic(mu,I0)
+            b1,b2,b3 = fit_three_parameter(mu,I0)
+            l1,l2 = fit_logarithmic(mu,I0)
+            e1,e2 = fit_exponential(mu,I0)
+            s1,s2 = fit_square_root(mu,I0)
 
-       # Save them to the input file:
-       fout.write(name+'\t'+model+'\t'+response_function+'\t'+str(np.round(chosen_teff,2))+'\t'+str(np.round(chosen_grav,2))+'\t'+str(np.round(chosen_met,2))+\
+        # Save them to the input file:
+        fout.write(name+'\t'+model+'\t'+response_function+'\t'+str(np.round(chosen_teff,2))+'\t'+str(np.round(chosen_grav,2))+'\t'+str(np.round(chosen_met,2))+\
                   '\t'+str(np.round(chosen_vturb,2))+'\t'+str(a)+'\t'+str(u1)+'\t'+str(u2)+'\t'+str(b1)+'\t'+str(b2)+'\t'+str(b3)+'\t'+str(c1)+'\t'+str(c2)+'\t'+\
                   str(c3)+'\t'+str(c4)+'\t'+str(l1)+'\t'+str(l2)+'\t'+str(e1)+'\t'+str(e2)+'\t'+str(s1)+'\t'+str(s2)+'\n')
 
-       print '\t > Done! \n'
-       print '\t ##########################################################\n'
+        print '\t > Done! \n'
+        print '\t ##########################################################\n'
 
     ######################################################################################
     # IF USING PHOENIX MODELS....
@@ -1061,81 +1058,81 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
 
     elif 'P' in model:
 
-       # Now, search for best-match PHOENIX model for the input stellar parameters:
-       print '\n'
-       print '\t PHOENIX modelling'
-       print '\t -----------------\n'
-       print '\t > Searching for best-match PHOENIX model...'
-       chosen_path, chosen_teff, chosen_grav, chosen_met, chosen_vturb = PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb)
+        # Now, search for best-match PHOENIX model for the input stellar parameters:
+        print '\n'
+        print '\t PHOENIX modelling'
+        print '\t -----------------\n'
+        print '\t > Searching for best-match PHOENIX model...'
+        chosen_path, chosen_teff, chosen_grav, chosen_met, chosen_vturb = PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb)
 
-       # Read PHOENIX model wavelenghts, intensities and mus:
-       print '\t > Reading PHOENIX model...'
-       wavelengths, I, mu = read_PHOENIX(chosen_path)
+        # Read PHOENIX model wavelenghts, intensities and mus:
+        print '\t > Reading PHOENIX model...'
+        wavelengths, I, mu = read_PHOENIX(chosen_path)
 
-       # Now use these intensities to obtain the (normalized) integrated intensities with 
-       # the response function:
-       I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, photon_correction, interpolation_order)
+        # Now use these intensities to obtain the (normalized) integrated intensities with 
+        # the response function:
+        I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, photon_correction, interpolation_order)
 
-       # Obtain correction due to spherical extension. First, obtain the value of r_max:
-       r, fine_r_max = get_rmax(mu,I0)
+        # Obtain correction due to spherical extension. First, obtain the value of r_max:
+        r, fine_r_max = get_rmax(mu,I0)
 
-       # Now obtain the new values of r for each intensity point and leave out the ones that 
-       # have r>1:
-       new_r = r/fine_r_max
-       idx_new = np.where(new_r<=1.0)[0]
-       new_r = new_r[idx_new]
-       new_mu = np.sqrt(1.0-(new_r**2))
-       new_I0 = I0[idx_new]
+        # Now obtain the new values of r for each intensity point and leave out the ones that 
+        # have r>1:
+        new_r = r/fine_r_max
+        idx_new = np.where(new_r<=1.0)[0]
+        new_r = new_r[idx_new]
+        new_mu = np.sqrt(1.0-(new_r**2))
+        new_I0 = I0[idx_new]
        
-       # Now, if the model requires it, obtain 100-mu points interpolated in this final range of "usable"
-       # intensities:
-       if(model == 'P100'):
-          mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
-          I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100, S_res, S_wav, photon_correction, interpolation_order)
+        # Now, if the model requires it, obtain 100-mu points interpolated in this final range of "usable"
+        # intensities:
+        if(model == 'P100'):
+            mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
+            I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100, S_res, S_wav, photon_correction, interpolation_order)
        
        # Now define each possible model and fit LDs:
-       if(model == 'PQS'): # Quasi-spherical model, as defined by Claret et al. (2012), mu>=0.1
-          idx = np.where(new_mu>=0.1)[0]
-          c1,c2,c3,c4 = fit_non_linear(new_mu[idx],new_I0[idx])
-          a = fit_linear(new_mu[idx],new_I0[idx])
-          u1,u2 = fit_quadratic(new_mu[idx],new_I0[idx])
-          b1,b2,b3 = fit_three_parameter(new_mu[idx],new_I0[idx])
-          l1,l2 = fit_logarithmic(new_mu[idx],new_I0[idx])
-          e1,e2 = fit_exponential(new_mu[idx],new_I0[idx])
-          s1,s2 = fit_square_root(new_mu[idx],new_I0[idx])
-       elif(model == 'PS'): # Sing method:
-          idx = np.where(new_mu>=0.05)[0]
-          c1,c2,c3,c4 = fit_non_linear(new_mu,new_I0)
-          a = fit_linear(new_mu[idx],new_I0[idx])
-          u1,u2 = fit_quadratic(new_mu[idx],new_I0[idx])
-          b1,b2,b3 = fit_three_parameter(new_mu[idx],new_I0[idx])
-          l1,l2 = fit_logarithmic(new_mu[idx],new_I0[idx])
-          e1,e2 = fit_exponential(new_mu[idx],new_I0[idx])
-          s1,s2 = fit_square_root(new_mu[idx],new_I0[idx])
-       elif(model == 'P100'):
-          c1,c2,c3,c4 = fit_non_linear(mu100,I0_100)
-          a = fit_linear(mu100,I0_100)
-          u1,u2 = fit_quadratic(mu100,I0_100)
-          b1,b2,b3 = fit_three_parameter(mu100,I0_100)
-          l1,l2 = fit_logarithmic(mu100,I0_100)
-          e1,e2 = fit_exponential(mu100,I0_100)
-          s1,s2 = fit_square_root(mu100,I0_100)
-       else:
-          c1,c2,c3,c4 = fit_non_linear(new_mu,new_I0)
-          a = fit_linear(new_mu,new_I0)
-          u1,u2 = fit_quadratic(new_mu,new_I0)
-          b1,b2,b3 = fit_three_parameter(new_mu,new_I0)
-          l1,l2 = fit_logarithmic(new_mu,new_I0)
-          e1,e2 = fit_exponential(new_mu,new_I0)
-          s1,s2 = fit_square_root(new_mu,new_I0)
+        if(model == 'PQS'): # Quasi-spherical model, as defined by Claret et al. (2012), mu>=0.1
+            idx = np.where(new_mu>=0.1)[0]
+            c1,c2,c3,c4 = fit_non_linear(new_mu[idx],new_I0[idx])
+            a = fit_linear(new_mu[idx],new_I0[idx])
+            u1,u2 = fit_quadratic(new_mu[idx],new_I0[idx])
+            b1,b2,b3 = fit_three_parameter(new_mu[idx],new_I0[idx])
+            l1,l2 = fit_logarithmic(new_mu[idx],new_I0[idx])
+            e1,e2 = fit_exponential(new_mu[idx],new_I0[idx])
+            s1,s2 = fit_square_root(new_mu[idx],new_I0[idx])
+        elif(model == 'PS'): # Sing method:
+            idx = np.where(new_mu>=0.05)[0]
+            c1,c2,c3,c4 = fit_non_linear(new_mu,new_I0)
+            a = fit_linear(new_mu[idx],new_I0[idx])
+            u1,u2 = fit_quadratic(new_mu[idx],new_I0[idx])
+            b1,b2,b3 = fit_three_parameter(new_mu[idx],new_I0[idx])
+            l1,l2 = fit_logarithmic(new_mu[idx],new_I0[idx])
+            e1,e2 = fit_exponential(new_mu[idx],new_I0[idx])
+            s1,s2 = fit_square_root(new_mu[idx],new_I0[idx])
+        elif(model == 'P100'):
+            c1,c2,c3,c4 = fit_non_linear(mu100,I0_100)
+            a = fit_linear(mu100,I0_100)
+            u1,u2 = fit_quadratic(mu100,I0_100)
+            b1,b2,b3 = fit_three_parameter(mu100,I0_100)
+            l1,l2 = fit_logarithmic(mu100,I0_100)
+            e1,e2 = fit_exponential(mu100,I0_100)
+            s1,s2 = fit_square_root(mu100,I0_100)
+        else:
+            c1,c2,c3,c4 = fit_non_linear(new_mu,new_I0)
+            a = fit_linear(new_mu,new_I0)
+            u1,u2 = fit_quadratic(new_mu,new_I0)
+            b1,b2,b3 = fit_three_parameter(new_mu,new_I0)
+            l1,l2 = fit_logarithmic(new_mu,new_I0)
+            e1,e2 = fit_exponential(new_mu,new_I0)
+            s1,s2 = fit_square_root(new_mu,new_I0)
 
-       # Save to the file:
-       fout.write(name+'\t'+model+'\t'+response_function+'\t'+str(np.round(chosen_teff,2))+'\t'+str(np.round(chosen_grav,2))+'\t'+str(np.round(chosen_met,2))+\
+        # Save to the file:
+        fout.write(name+'\t'+model+'\t'+response_function+'\t'+str(np.round(chosen_teff,2))+'\t'+str(np.round(chosen_grav,2))+'\t'+str(np.round(chosen_met,2))+\
                   '\t'+str(np.round(chosen_vturb,2))+'\t'+str(a)+'\t'+str(u1)+'\t'+str(u2)+'\t'+str(b1)+'\t'+str(b2)+'\t'+str(b3)+'\t'+str(c1)+'\t'+str(c2)+'\t'+\
                   str(c3)+'\t'+str(c4)+'\t'+str(l1)+'\t'+str(l2)+'\t'+str(e1)+'\t'+str(e2)+'\t'+str(s1)+'\t'+str(s2)+'\n')
 
-       print '\t > Done! \n'
-       print '\t ##########################################################\n'
+        print '\t > Done! \n'
+        print '\t ##########################################################\n'
     return 1
 
 print '\n'
@@ -1174,6 +1171,9 @@ while(ok):
      break
   elif(line[0]!='#'):
      splitted = line.split('\t')
+     if len(splitted) == 1:
+        # If split is not done with tabs, but spaces:
+        splitted = line.split()
      name = fix_spaces(splitted[0])
      teff = splitted[1]
      grav = splitted[2]
