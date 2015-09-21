@@ -13,10 +13,10 @@ import urllib2
 ################################################################## OPTIONS ###################################################################
 
 # Filename with the stellar information, wavelengths of integration, etc:
-input_filename = 'input_files/kepler_example.dat'               
+input_filename = 'input_files/all_atlas_lds_kepler.dat'               
 
 # Filename of the output (which will contain the lds):
-output_filename = 'kepler_example.dat'
+output_filename = 'all_atlas_lds_kepler.dat'
 
 # Order of the interpolation done for sampling intensities:
 interpolation_order = 1
@@ -326,7 +326,7 @@ def downloader(url):
 
 def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     """
-    Given input metallicities, gravities, effective temperature and microtiurbulent velocity,
+    Given input metallicities, gravities, effective temperature and microturbulent velocity,
     this function estimates which model is the most appropiate (i.e., the closer one in 
     parameter space). If the model is not present in the system, it downloads it from 
     Robert L. Kurucz's website (kurucz.harvard.edu/grids.html).
@@ -511,41 +511,49 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 
     # Now, check if the models in machine readable form have been generated. If not, generate them:
     if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
-        # Now read the file:
-        if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck'):
-            lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck')
-        elif os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19'):
-            lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19')
-        else:
-            lines = getFileLines('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck')
+        # Now read the files and generate machine-readable files:
+        possible_paths = ['atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck',\
+                          'atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19',\
+                          'atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck']
 
-        # Create folder for current metallicity and turbulent velocity:
-        os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
-        # Save files in the folder:
-        while True: 
-            TEFF,GRAVITY,LH = getATLASStellarParams(lines)
-            if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF):
-                os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF)
-            idx,mus = getIntensitySteps(lines)
-            f = open('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat','w')
-            f.write('#TEFF:'+TEFF+' METALLICITY:'+met_dir+' GRAVITY:'+GRAVITY+' VTURB:'+str(int(chosen_vturb))+' L/H: '+LH+'\n')
-            f.write('#wav (nm) \t cos(theta):'+mus)
-            for i in range(idx,len(lines)):
-                line = lines[i]
-                idx = line.find('EFF')
-                idx2 = line.find('\x0c')
-                if(idx2!=-1 or line==''):
-                    hhhh=1
-                elif(idx!=-1):
-                    lines = lines[i:]
-                    break
-                else:
-                    wav_p_intensities = line.split(' ')
-                    s = FixSpaces(wav_p_intensities)
-                    f.write(s+'\n')
-            f.close()
-            if(i==len(lines)-1):
-                break
+        for i in range(len(possible_paths)):
+            possible_path = possible_paths[i]
+            if os.path.exists(possible_path):
+                lines = getFileLines(possible_path)
+                # Create folder for current metallicity and turbulent velocity if not created already:
+                if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
+                    os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
+                # Save files in the folder:
+                while True: 
+                    TEFF,GRAVITY,LH = getATLASStellarParams(lines)
+                    if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF):
+                        os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF)
+                    idx,mus = getIntensitySteps(lines)
+                    save_mr_file = True
+                    if os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat'):
+                        save_mr_file = False
+                    if save_mr_file:
+                        f = open('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat','w')
+                        f.write('#TEFF:'+TEFF+' METALLICITY:'+met_dir+' GRAVITY:'+GRAVITY+' VTURB:'+str(int(chosen_vturb))+' L/H: '+LH+'\n')
+                        f.write('#wav (nm) \t cos(theta):'+mus)
+                    for i in range(idx,len(lines)):
+                        line = lines[i]
+                        idx = line.find('EFF')
+                        idx2 = line.find('\x0c')
+                        if(idx2!=-1 or line==''):
+                            hhhh=1
+                        elif(idx!=-1):
+                            lines = lines[i:]
+                            break
+                        else:
+                            wav_p_intensities = line.split(' ')
+                            s = FixSpaces(wav_p_intensities)
+                            if save_mr_file:
+                                f.write(s+'\n')
+                    if save_mr_file:
+                        f.close()
+                    if(i==len(lines)-1):
+                        break
 
     # Now, assuming models are written in machine readable form, we can work:
     chosen_met_folder = 'atlas_models/'+met_dir+'k'+str(int(chosen_vturb))
