@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 from scipy.optimize import leastsq
 from scipy.interpolate import UnivariateSpline
 from copy import copy
