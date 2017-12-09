@@ -924,7 +924,7 @@ def get_rmax(mu,I0):
     # Estimate the derivatives at each point:
     rPi, m = get_derivatives(r,I0)
     # Estimate point of maximum (absolute) derivative:
-    idx_max = np.where(np.abs(m) == np.max(np.abs(m)))[0]
+    idx_max = np.argmax(np.abs(m))
     r_max = rPi[idx_max]
     # To refine this value, take 20 points to the left and 20 to the right of this value,
     # generate spline and search for roots:
