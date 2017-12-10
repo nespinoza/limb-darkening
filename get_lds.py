@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 from scipy.optimize import leastsq
 from scipy.interpolate import UnivariateSpline
 from copy import copy
@@ -796,45 +797,36 @@ def read_ATLAS(chosen_filename, model):
        mu100 = np.arange(0.01,1.01,0.01)
 
     # Now prepare files and read data from the ATLAS models:
-    I = np.array([])
-    I100 = np.array([])
-    wavelengths = np.array([])
-    f = open(chosen_filename,'r')
-    counter = 0
-    while(True):
-        l = f.readline()
-        if(l==''):
-            break
+    with open(chosen_filename, 'r') as f:
+      lines = f.readlines()
+    # Remove comments and blank lines:
+    for i in np.flip(np.arange(len(lines)),0):
+        if lines[i].strip() == "" or lines[i].strip().startswith("#"):
+            lines.pop(i)
+
+    nwave = len(lines)
+    wavelengths = np.zeros(nwave)
+    intensities = np.zeros((nwave, len(mu)))
+    I100        = np.zeros((nwave, len(mu100)))
+    for i in np.arange(nwave):
         # If no jump of line or comment, save the intensities:
-        if(l[0]!='#' and l[:3]!='\n'):
-            splitted = l.split('\t')
-            if(len(splitted)==18):
-                splitted[-1] = (splitted[-1])[:-1]                                  # The last one always has a jump of line (\n), so erase it.
-                wavelength = np.double(splitted[0])*10                              # Convert wavelengths, which are in nanometers, to angstroms.
-                intensities = np.double(np.array(splitted[1:]))                     # Get the intensities.
-                ndigits = len(str(int(intensities[1])))
-                # Only if I(1) is different from zero, fit the LDs:
-                if(intensities[0]!=0.0):
-                    intensities[1:] = intensities[1:]/1e5                            # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
-                    intensities[1:] = intensities[1:]*intensities[0]                 # All the rest of the intensities are normalized w/r to the center one.
-                    # If we want, we extract the 100 interpolated mu-points:
-                    if(model == 'A100'):
-                        II = UnivariateSpline(mu[::-1],intensities[::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
-                        intensities100 = II(mu100)
-                        # And stack the intensities in the I100 array:
-                        if(counter == 0):
-                            I100 = intensities100
-                        else:
-                            I100 = np.vstack((I100,intensities100))
-                    # Now we stack the original intensities in the I array:
-                    if(counter == 0):
-                        I = intensities
-                    else:
-                        I = np.vstack((I,intensities))
-                    wavelengths = np.append(wavelengths,wavelength)
-                    counter = counter + 1
-    f.close()
-    return wavelengths, I, I100,mu, mu100
+        splitted = lines[i].split()
+        if(len(splitted)==18):
+            wavelengths[i] = np.double(splitted[0])*10  # nano to angstrom
+            intensities[i] = np.array(splitted[1:], np.double)                     # Get the intensities.
+            ndigits = len(str(int(intensities[i,1])))
+            # Only if I(1) is different from zero, fit the LDs:
+            if(intensities[i,0]!=0.0):
+                intensities[i,1:] = intensities[i,1:]/1e5                            # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
+                intensities[i,1:] = intensities[i,1:]*intensities[i,0]                 # All the rest of the intensities are normalized w/r to the center one.
+                # If we want, we extract the 100 interpolated mu-points:
+                if(model == 'A100'):
+                    II = UnivariateSpline(mu[::-1],intensities[i,::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+                    I100[i] = II(mu100)
+
+    # Select only those with non-zero intensity:
+    flag = intensities[:,0] != 0.0
+    return wavelengths[flag], intensities[flag], I100[flag], mu, mu100
 
 def read_PHOENIX(chosen_path):
     mu = pyfits.getdata(chosen_path,'MU')
@@ -923,7 +915,7 @@ def get_rmax(mu,I0):
     # Estimate the derivatives at each point:
     rPi, m = get_derivatives(r,I0)
     # Estimate point of maximum (absolute) derivative:
-    idx_max = np.where(np.abs(m) == np.max(np.abs(m)))[0]
+    idx_max = np.argmax(np.abs(m))
     r_max = rPi[idx_max]
     # To refine this value, take 20 points to the left and 20 to the right of this value,
     # generate spline and search for roots:
@@ -940,17 +932,10 @@ def get_rmax(mu,I0):
 
 def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     mu100 = np.arange(0.01,1.01,0.01)
-    I100 = np.array([])
-    first_time = True
+    I100 = np.zeros((len(wavelengths),len(mu100)))
     for i in range(len(wavelengths)):
         II = UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3) # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
-        intensities100 = II(mu100)
-        # And stack the intensities in the I100 array:
-        if(first_time):
-            I100 = intensities100
-            first_time = False
-        else:
-            I100 = np.vstack((I100,intensities100))
+        I100[i] = II(mu100)
     return mu100,I100
 
 def save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
