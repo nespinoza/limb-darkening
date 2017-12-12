@@ -1,17 +1,19 @@
 #! /usr/bin/env python
-from scipy.optimize import leastsq
-from scipy.interpolate import UnivariateSpline
-from copy import copy
-import scipy.integrate as integrate
-import subprocess
 import sys
-import numpy as np
-import pyfits
-import glob
 import os
+import numpy as np
+import glob
 import urllib2
+import argparse
+import scipy.interpolate as si
+from copy import copy
 
-################################################################## OPTIONS ###################################################################
+try:
+  import pyfits as fits
+except:
+  import astropy.io.fits as fits
+
+########## OPTIONS ###################################################
 
 # Filename with the stellar information, wavelengths of integration, etc:
 input_filename = 'input_files/all_atlas_lds_kepler.dat'
@@ -29,10 +31,9 @@ atlas_correction = True
 # Now decide if you want to apply photon counting correction, lambda/hc:
 photon_correction = True
 
-##############################################################################################################################################
+######################################################################
 # This is just in case you want to run everything from command line:
 
-import argparse
 parser = argparse.ArgumentParser()
 # Set the input file:
 parser.add_argument('-ifile', default=None)
@@ -770,7 +771,7 @@ def get_response(min_w, max_w, response_function):
             max_w = max(w)
 
     # Fit a univariate spline with s=0 (i.e., a node in each data-point) and k = 1 (linear spline).
-    S = UnivariateSpline(w,r,s=0,k=1)
+    S = si.UnivariateSpline(w,r,s=0,k=1)
     if type(min_w) is list:
        S_wav = []
        S_res = []
@@ -821,20 +822,23 @@ def read_ATLAS(chosen_filename, model):
                 intensities[i,1:] = intensities[i,1:]*intensities[i,0]                 # All the rest of the intensities are normalized w/r to the center one.
                 # If we want, we extract the 100 interpolated mu-points:
                 if(model == 'A100'):
-                    II = UnivariateSpline(mu[::-1],intensities[i,::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+                    II = si.UnivariateSpline(mu[::-1],intensities[i,::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
                     I100[i] = II(mu100)
 
     # Select only those with non-zero intensity:
     flag = intensities[:,0] != 0.0
     return wavelengths[flag], intensities[flag], I100[flag], mu, mu100
 
+
 def read_PHOENIX(chosen_path):
-    mu = pyfits.getdata(chosen_path,'MU')
-    data = pyfits.getdata(chosen_path)
-    CDELT1, CRVAL1 = pyfits.getval(chosen_path,'CDELT1'), pyfits.getval(chosen_path,'CRVAL1')
+    mu = fits.getdata(chosen_path, 'MU')
+    data = fits.getdata(chosen_path)
+    CDELT1 = fits.getval(chosen_path, 'CDELT1')
+    CRVAL1 = fits.getval(chosen_path, 'CRVAL1')
     wavelengths = np.arange(data.shape[1]) * CDELT1 + CRVAL1
     I = data.transpose()
     return wavelengths, I, mu
+
 
 def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
                              atlas_correction, photon_correction, interpolation_order, model):
@@ -849,9 +853,9 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
     for i in range(nmus):
         # Interpolate the intensities:
         if(model == "A100"):
-            Ifunc = UnivariateSpline(wavelengths,I100[:,i],s=0,k=interpolation_order)
+            Ifunc = si.UnivariateSpline(wavelengths,I100[:,i],s=0,k=interpolation_order)
         else:
-            Ifunc = UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
+            Ifunc = si.UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
         # If several wavelength ranges where given, integrate through each chunk one at a time.
         # If not, integrate the given chunk:
         if type(S_res) is list:
@@ -889,7 +893,7 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
 def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction, interpolation_order):
     I_l = np.array([])
     for i in range(len(mu)):
-        Ifunc = UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
+        Ifunc = si.UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
         if type(S_res) is list:
             integration_results = 0.0
             for j in range(len(S_res)):
@@ -922,7 +926,7 @@ def get_rmax(mu,I0):
     ndata = 20
     r_maxes = rPi[idx_max-ndata:idx_max+ndata]
     m_maxes = m[idx_max-ndata:idx_max+ndata]
-    spl = UnivariateSpline(r_maxes[::-1],m_maxes[::-1],s=0,k=4)
+    spl = si.UnivariateSpline(r_maxes[::-1],m_maxes[::-1],s=0,k=4)
     fine_r_max = spl.derivative().roots()
     if(len(fine_r_max)>1):
        abs_diff = np.abs(fine_r_max-r_max)
@@ -934,7 +938,7 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     mu100 = np.arange(0.01,1.01,0.01)
     I100 = np.zeros((len(wavelengths),len(mu100)))
     for i in range(len(wavelengths)):
-        II = UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3) # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+        II = si.UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3) # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
         I100[i] = II(mu100)
     return mu100,I100
 
