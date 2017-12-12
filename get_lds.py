@@ -14,7 +14,7 @@ import urllib2
 ################################################################## OPTIONS ###################################################################
 
 # Filename with the stellar information, wavelengths of integration, etc:
-input_filename = 'input_files/all_atlas_lds_kepler.dat'               
+input_filename = 'input_files/all_atlas_lds_kepler.dat'
 
 # Filename of the output (which will contain the lds):
 output_filename = 'all_atlas_lds_kepler.dat'
@@ -23,7 +23,7 @@ output_filename = 'all_atlas_lds_kepler.dat'
 interpolation_order = 1
 
 # Define if you will apply the corrections or not. First the ATLAS one,
-# if True, convert ATLAS intensities using c/lambda**2 (ATLAS intensities 
+# if True, convert ATLAS intensities using c/lambda**2 (ATLAS intensities
 # are given per frequency):
 atlas_correction = True
 # Now decide if you want to apply photon counting correction, lambda/hc:
@@ -53,8 +53,8 @@ version = 'v.1.0.'
 def get_derivatives(rP,IP):
     """
     GET DERIVATIVES
-    
-    This function calculates the derivatives in an intensity profile I(r). For a detailed 
+
+    This function calculates the derivatives in an intensity profile I(r). For a detailed
     explaination, see Section 2.2 in Espinoza & Jordan (2015).
 
     INPUTS:
@@ -72,7 +72,7 @@ def get_derivatives(rP,IP):
     ri = rP[1:-1] # Points
     mui = np.sqrt(1-ri**2)
     rib = rP[:-2] # Points inmmediately before
-    ria = rP[2:]  # Points inmmediately after 
+    ria = rP[2:]  # Points inmmediately after
     Ii = IP[1:-1]
     Iib = IP[:-2]
     Iia = IP[2:]
@@ -97,7 +97,7 @@ def fix_spaces(the_string):
 def fit_exponential(mu,I):
     """
     FIT EXPONENTIAL LD LAW
-    
+
     This function calculates the coefficients for the exponential LD law. It assumes input intensities are normalized.
     For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -118,7 +118,7 @@ def fit_exponential(mu,I):
     A = np.zeros([2,2])
     # Define b vector for the linear system:
     b = np.zeros(2)
-    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case, 
+    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case,
     # g_1 = 1-mu, g_2 = 1/(1-exp(mu)):
     A[0,0] = sum((1.0-mu)**2)                    # alpha_{1,1}
     A[0,1] = sum((1.0-mu)*(1./(1.-np.exp(mu))))  # alpha_{1,2}
@@ -152,7 +152,7 @@ def fit_logarithmic(mu,I):
     A = np.zeros([2,2])
     # Define b vector for the linear system:
     b = np.zeros(2)
-    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case, 
+    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case,
     # g_1 = 1-mu, g_2 = mu*ln(mu):
     A[0,0] = sum((1.0-mu)**2)               # alpha_{1,1}
     A[0,1] = sum((1.0-mu)*(mu*np.log(mu)))  # alpha_{1,2}
@@ -211,11 +211,11 @@ def fit_non_linear(mu,I):
     OUTPUTS:
 
      c1:   Coefficient of the square-root term of the non-linear law.
-     
+
      c2:   Coefficient of the linear term of the non-linear law.
 
      c3:   Coefficient of the (1-mu^{3/2}) term of the non-linear law.
-      
+
      c4:   Coefficient of the quadratic term of the non-linear law.
 
     """
@@ -246,7 +246,7 @@ def fit_three_parameter(mu,I):
     OUTPUTS:
 
      b1:   Coefficient of the linear term of the three-parameter law.
-     
+
      b2:   Coefficient of the (1-mu^{3/2}) part of the three-parameter law.
 
      b3:   Coefficient of the quadratic term of the three-parameter law.
@@ -279,7 +279,7 @@ def fit_quadratic(mu,I):
     OUTPUTS:
 
      u1:   Linear coefficient of the quadratic law.
-     
+
      u2:   Quadratic coefficient of the quadratic law.
 
     """
@@ -328,14 +328,14 @@ def downloader(url):
 def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     """
     Given input metallicities, gravities, effective temperature and microturbulent velocity,
-    this function estimates which model is the most appropiate (i.e., the closer one in 
-    parameter space). If the model is not present in the system, it downloads it from 
+    this function estimates which model is the most appropiate (i.e., the closer one in
+    parameter space). If the model is not present in the system, it downloads it from
     Robert L. Kurucz's website (kurucz.harvard.edu/grids.html).
     """
-   
+
     if not os.path.exists('atlas_models'):
        os.mkdir('atlas_models')
-       os.mkdir('atlas_models/raw_models') 
+       os.mkdir('atlas_models/raw_models')
 
     def getFileLines(fname):
         f = open(fname,'r')
@@ -459,7 +459,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
         # If not in the system, download it from Kurucz's website. First, check all possible
         # files to download:
         print '\t    + Model file not found.'
-        response = urllib2.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/') 
+        response = urllib2.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/')
         html = response.read()
         ok = True
         filenames = []
@@ -504,11 +504,11 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                             os.rename(afname,'atlas_models/raw_models/'+afname)
                         else:
                             os.mkdir('atlas_models/raw_models/')
-                            os.rename(afname,'atlas_models/raw_models/'+afname)       
+                            os.rename(afname,'atlas_models/raw_models/'+afname)
         if not gotit:
             print '\t > No model with closest metallicity of '+str(chosen_met)+' and closest vturb of '+str(chosen_vturb)+' km/s found.'
             print '\t   Please, modify the input values of the target and select other stellar parameters for it.'
-            sys.exit() 
+            sys.exit()
 
     # Now, check if the models in machine readable form have been generated. If not, generate them:
     if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
@@ -525,7 +525,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                 if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
                     os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
                 # Save files in the folder:
-                while True: 
+                while True:
                     TEFF,GRAVITY,LH = getATLASStellarParams(lines)
                     if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF):
                         os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF)
@@ -590,7 +590,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 
     print '\t    + For input metallicity '+str(s_met)+', effective temperature '+str(s_teff)+' K, and '
     print '\t      log-gravity '+str(s_grav)+', and turbulent velocity '+str(s_vturb)+' km/s, closest '
-    print '\t      combination is metallicity: '+str(chosen_met)+', effective temperature: '+str(chosen_teff)+' K,' 
+    print '\t      combination is metallicity: '+str(chosen_met)+', effective temperature: '+str(chosen_teff)+' K,'
     print '\t      log-gravity '+str(chosen_grav)+' and turbulent velocity of '+str(chosen_vturb)+' km/s.'
     print ''
     print '\t    + Chosen model file to be used: '+chosen_filename
@@ -600,8 +600,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     """
     Given input metallicities, gravities, effective temperature and microtiurbulent velocity,
-    this function estimates which model is the most appropiate (i.e., the closer one in 
-    parameter space). If the model is not present in the system, it downloads it from 
+    this function estimates which model is the most appropiate (i.e., the closer one in
+    parameter space). If the model is not present in the system, it downloads it from
     the PHOENIX public library (phoenix.astro.physik.uni-goettingen.de).
     """
 
@@ -648,15 +648,15 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
 
     chosen_met_folder = model_path+met_folder
 
-    # Check if folder exists. If it does not, create it and download the 
-    # PHOENIX models that are closer in temperature and gravity to the 
+    # Check if folder exists. If it does not, create it and download the
+    # PHOENIX models that are closer in temperature and gravity to the
     # user input values:
     if not os.path.exists(chosen_met_folder):
        os.mkdir(chosen_met_folder)
     cwd = os.getcwd()
     os.chdir(chosen_met_folder)
 
-    # See if in a past call the file list for the given metallicity was 
+    # See if in a past call the file list for the given metallicity was
     # saved; if not, retrieve it from the PHOENIX website:
     if os.path.exists('file_list.dat'):
        all_files = np.loadtxt('file_list.dat',unpack=True,dtype=np.dtype('S'))
@@ -868,7 +868,7 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
                 integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
         else:
             if atlas_correction and photon_correction:
-                integrand = (S_res*Ifunc(S_wav)) / S_wav    
+                integrand = (S_res*Ifunc(S_wav)) / S_wav
             elif atlas_correction and not photon_correction:
                 integrand = (S_res*Ifunc(S_wav)) / (S_wav**2)
             elif not atlas_correction and photon_correction:
@@ -943,7 +943,7 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
     """
     SAVE LDS
 
-    This function generates the limb-darkening coefficients. Note that response_function can be a string with the filename of a 
+    This function generates the limb-darkening coefficients. Note that response_function can be a string with the filename of a
     response function not in the list. The file has to be in the response_functions folder.
 
     INPUTS:
@@ -962,7 +962,7 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
      photon_correction:      If True, correction for photon-counting devices is used.
 
      s_met:                  Metallicity of the star.
-     
+
      s_grav:                 log_g of the star (cgs).
 
      s_teff:                 Effective temperature of the star (K).
@@ -985,7 +985,7 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
 
     # Get the response file minimum and maximum wavelengths and all the wavelengths and values:
     min_w, max_w, S_wav, S_res = get_response(min_w, max_w, response_function)
-    
+
     ######################################################################################
     # IF USING ATLAS MODELS....
     ######################################################################################
@@ -999,16 +999,16 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
         print '\t > Searching for best-match Kurucz model...'
         chosen_filename, chosen_teff, chosen_grav, chosen_met, chosen_vturb = ATLAS_model_search(s_met, s_grav, s_teff, s_vturb)
 
-        # Read wavelengths and intensities (I) from ATLAS models. If model is "A100", it also 
+        # Read wavelengths and intensities (I) from ATLAS models. If model is "A100", it also
         # returns the interpolated intensities (I100) and the associated mu values (mu100).
         # If not, those arrays are empty:
         wavelengths, I, I100, mu, mu100 = read_ATLAS(chosen_filename, model)
 
-        # Now use these intensities to obtain the (normalized) integrated intensities with 
+        # Now use these intensities to obtain the (normalized) integrated intensities with
         # the response function:
         I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
                                      atlas_correction, photon_correction, interpolation_order,model)
-  
+
         # Finally, obtain the limb-darkening coefficients:
         if(model == "AS"):
             # Save indexes which apply to Sing's (2010) criterion:
@@ -1047,7 +1047,7 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
 
     ######################################################################################
     # IF USING PHOENIX MODELS....
-    ###################################################################################### 
+    ######################################################################################
 
     elif 'P' in model:
 
@@ -1062,27 +1062,27 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
         print '\t > Reading PHOENIX model...'
         wavelengths, I, mu = read_PHOENIX(chosen_path)
 
-        # Now use these intensities to obtain the (normalized) integrated intensities with 
+        # Now use these intensities to obtain the (normalized) integrated intensities with
         # the response function:
         I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, photon_correction, interpolation_order)
 
         # Obtain correction due to spherical extension. First, obtain the value of r_max:
         r, fine_r_max = get_rmax(mu,I0)
 
-        # Now obtain the new values of r for each intensity point and leave out the ones that 
+        # Now obtain the new values of r for each intensity point and leave out the ones that
         # have r>1:
         new_r = r/fine_r_max
         idx_new = np.where(new_r<=1.0)[0]
         new_r = new_r[idx_new]
         new_mu = np.sqrt(1.0-(new_r**2))
         new_I0 = I0[idx_new]
-       
+
         # Now, if the model requires it, obtain 100-mu points interpolated in this final range of "usable"
         # intensities:
         if(model == 'P100'):
             mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
             I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100, S_res, S_wav, photon_correction, interpolation_order)
-       
+
        # Now define each possible model and fit LDs:
         if(model == 'PQS'): # Quasi-spherical model, as defined by Claret et al. (2012), mu>=0.1
             idx = np.where(new_mu>=0.1)[0]
