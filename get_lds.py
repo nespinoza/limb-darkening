@@ -120,22 +120,16 @@ def getIntensitySteps(lines):
 version = 'v.1.0.'
 def get_derivatives(rP,IP):
     """
-    GET DERIVATIVES
-
-    This function calculates the derivatives in an intensity profile I(r). For a detailed
-    explaination, see Section 2.2 in Espinoza & Jordan (2015).
+    This function calculates the derivatives in an intensity profile I(r).
+    For a detailed explaination, see Section 2.2 in Espinoza & Jordan (2015).
 
     INPUTS:
-
-     rP:   Normalized radii, given by r = sqrt(1-mu**2)
-
-     IP:   Intensity at the given radii I(r).
+      rP:   Normalized radii, given by r = sqrt(1-mu**2)
+      IP:   Intensity at the given radii I(r).
 
     OUTPUTS:
-
-     rP:      Output radii at which the derivatives are calculated.
-
-     dI/dr:   Measurement of the derivative of the intensity profile.
+      rP:      Output radii at which the derivatives are calculated.
+      dI/dr:   Measurement of the derivative of the intensity profile.
     """
     ri = rP[1:-1] # Points
     mui = np.sqrt(1-ri**2)
@@ -150,11 +144,12 @@ def get_derivatives(rP,IP):
     num = (ri-rbar)*(Ii-Ibar) + (rib-rbar)*(Iib-Ibar) + (ria-rbar)*(Iia-Ibar)
     den = (ri-rbar)**2 + (rib-rbar)**2 + (ria-rbar)**2
 
-    return rP[1:-1],num/den
+    return rP[1:-1], num/den
+
 
 def fix_spaces(the_string):
     """
-    This function simply fixes some spacing issues in the ATLAS model files.
+    This function fixes some spacing issues in the ATLAS model files.
     """
     splitted = the_string.split(' ')
     for s in splitted:
@@ -162,25 +157,22 @@ def fix_spaces(the_string):
            return s
     return the_string
 
-def fit_exponential(mu,I):
+
+def fit_exponential(mu, I):
     """
     FIT EXPONENTIAL LD LAW
 
-    This function calculates the coefficients for the exponential LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the exponential LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     e1:   Coefficient of the linear term of the exponential law.
-
-     e2:   Coefficient of the exponential term of the exponential law.
-
+      e1:   Coefficient of the linear term of the exponential law.
+      e2:   Coefficient of the exponential term of the exponential law.
     """
     # Define A matrix for the linear system:
     A = np.zeros([2,2])
@@ -196,32 +188,29 @@ def fit_exponential(mu,I):
     b[1] = sum((1./(1.-np.exp(mu)))*(1.0-I))     # beta_2
     return np.linalg.solve(A,b)
 
+
 def fit_logarithmic(mu,I):
     """
     FIT LOGARITHMIC LD LAW
 
-    This function calculates the coefficients for the logarithmic LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the logarithmic LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     l1:   Coefficient of the linear term of the logarithmic law.
-
-     l2:   Coefficient of the logarithmic term of the logarithmic law.
-
+      l1:   Coefficient of the linear term of the logarithmic law.
+      l2:   Coefficient of the logarithmic term of the logarithmic law.
     """
     # Define A matrix for the linear system:
     A = np.zeros([2,2])
     # Define b vector for the linear system:
     b = np.zeros(2)
-    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case,
-    # g_1 = 1-mu, g_2 = mu*ln(mu):
+    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector.
+    # In this case, g_1 = 1-mu, g_2 = mu*ln(mu):
     A[0,0] = sum((1.0-mu)**2)               # alpha_{1,1}
     A[0,1] = sum((1.0-mu)*(mu*np.log(mu)))  # alpha_{1,2}
     A[1,0] = A[0,1]                         # alpha_{2,1} = alpha_{1,2}
@@ -230,25 +219,22 @@ def fit_logarithmic(mu,I):
     b[1] = sum((mu*np.log(mu))*(1.0-I))     # beta_2
     return np.linalg.solve(A,b)
 
-def fit_square_root(mu,I):
+
+def fit_square_root(mu, I):
     """
     FIT SQUARE ROOT LD LAW
 
-    This function calculates the coefficients for the square-root LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the square-root LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     s1:   Coefficient of the linear term of the square-root law.
-
-     s2:   Coefficient of the square-root term of the square-root law.
-
+      s1:   Coefficient of the linear term of the square-root law.
+      s2:   Coefficient of the square-root term of the square-root law.
     """
     # Define A matrix for the linear system:
     A = np.zeros([2,2])
@@ -263,29 +249,23 @@ def fit_square_root(mu,I):
     return x[1],x[0] # x[1] = s1, x[0] = s2
 
 
-def fit_non_linear(mu,I):
+def fit_non_linear(mu, I):
     """
     FIT NON-LINEAR LD LAW
 
-    This function calculates the coefficients for the non-linear LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the non-linear LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     c1:   Coefficient of the square-root term of the non-linear law.
-
-     c2:   Coefficient of the linear term of the non-linear law.
-
-     c3:   Coefficient of the (1-mu^{3/2}) term of the non-linear law.
-
-     c4:   Coefficient of the quadratic term of the non-linear law.
-
+      c1:   Coefficient of the square-root term of the non-linear law.
+      c2:   Coefficient of the linear term of the non-linear law.
+      c3:   Coefficient of the (1-mu^{3/2}) term of the non-linear law.
+      c4:   Coefficient of the quadratic term of the non-linear law.
     """
     # Define A matrix for the linear system:
     A = np.zeros([4,4])
@@ -298,58 +278,52 @@ def fit_non_linear(mu,I):
         b[n-1] = sum((1.0-mu**(n/2.0))*(1.0-I))
     return np.linalg.solve(A,b)
 
-def fit_three_parameter(mu,I):
+
+def fit_three_parameter(mu, I):
     """
     FIT THREE PARAMETER LD LAW
 
-    This function calculates the coefficients for the three-parameter LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the three-parameter LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     b1:   Coefficient of the linear term of the three-parameter law.
-
-     b2:   Coefficient of the (1-mu^{3/2}) part of the three-parameter law.
-
-     b3:   Coefficient of the quadratic term of the three-parameter law.
+      b1:   Coefficient of the linear term of the three-parameter law.
+      b2:   Coefficient of the (1-mu^{3/2}) part of the three-parameter law.
+      b3:   Coefficient of the quadratic term of the three-parameter law.
     """
     # Define A matrix for the linear system:
     A = np.zeros([3,3])
     # Define b vector for the linear system:
     b = np.zeros(3)
-    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case we
-    # skip c1 (i.e., set c1=0):
+    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector.
+    # In this case we skip c1 (i.e., set c1=0):
     for n in range(2,5,1):
         for k in range(2,5,1):
             A[n-2,k-2] = sum((1.0-mu**(n/2.0))*(1.0-mu**(k/2.0)))
         b[n-2] = sum((1.0-mu**(n/2.0))*(1.0-I))
     return np.linalg.solve(A,b)
 
+
 def fit_quadratic(mu,I):
     """
     FIT QUADRATIC LD LAW
 
-    This function calculates the coefficients for the quadratic LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the quadratic LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     u1:   Linear coefficient of the quadratic law.
-
-     u2:   Quadratic coefficient of the quadratic law.
-
+      u1:   Linear coefficient of the quadratic law.
+      u2:   Quadratic coefficient of the quadratic law.
     """
     # Define A matrix for the linear system:
     A = np.zeros([2,2])
@@ -362,28 +336,27 @@ def fit_quadratic(mu,I):
         b[n-1] = sum(((1.0-mu)**n)*(1.0-I))
     return np.linalg.solve(A,b)
 
-def fit_linear(mu,I):
+
+def fit_linear(mu, I):
     """
     FIT LINEAR
 
-    This function calculates the coefficients for the linear LD law. It assumes input intensities are normalized.
-    For a derivation of the least-squares problem solved, see Espinoza & Jordan (2015).
+    This function calculates the coefficients for the linear LD law.
+    It assumes input intensities are normalized.  For a derivation of the
+    least-squares problem solved, see Espinoza & Jordan (2015).
 
     INPUTS:
-
-     mu:  Angles at which each intensity is calculated (numpy array).
-
-     I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
+      mu:  Angles at which each intensity is calculated (numpy array).
+      I:   Normalized intensities (i.e., I(mu)/I(1)) (numpy array).
 
     OUTPUTS:
-
-     a:   Coefficient of the linear law.
-
+      a:   Coefficient of the linear law.
     """
     alpha_1_1 = sum((1.0-mu)**2)
     beta_1 = sum((1.0-mu)*(1.0-I))
     a = beta_1/alpha_1_1
     return a
+
 
 def downloader(url):
     """
@@ -407,7 +380,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
        os.mkdir('atlas_models/raw_models')
 
     # This is the list of all the available metallicities in Kurucz's website:
-    possible_mets = np.array([-0.1, -0.2, -0.3, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5, -5.0, 0.0, 0.1, 0.2, 0.3, 0.5, 1.0])
+    possible_mets = np.array([-0.1, -0.2, -0.3, -0.5, -1.0, -1.5, -2.0, -2.5,
+                  -3.0, -3.5, -4.0, -4.5, -5.0, 0.0, 0.1, 0.2, 0.3, 0.5, 1.0])
     # And this is the list of all possible vturbs:
     possible_vturb = np.array([0.0, 2.0, 4.0, 8.0])
 
@@ -458,15 +432,20 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
        met_dir = 'p'+met_string[0]+met_string[1]
 
     print('\t    + Checking if ATLAS model file is on the system ...')
-    if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck') or \
-       os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19') or \
-       os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck'):
+    # This will make the code below easier to follow:
+    amodel = '{:s}k{:.0f}'.format(met_dir, chosen_vturb)
+    afile = 'atlas_models/raw_models/i' + amodel
+
+    if os.path.exists(afile + 'new.pck') or \
+       os.path.exists(afile + '.pck19')  or \
+       os.path.exists(afile + '.pck'):
         print('\t    + Model file found.')
     else:
-        # If not in the system, download it from Kurucz's website. First, check all possible
-        # files to download:
+        # If not in the system, download it from Kurucz's website.
+        # First, check all possible files to download:
         print('\t    + Model file not found.')
-        response = urllib.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/')
+        response = urllib.urlopen('http://kurucz.harvard.edu/grids/grid' +
+                                  met_dir + '/')
         html = response.read()
         ok = True
         filenames = []
@@ -481,9 +460,9 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
             html = html[idx+1:]
         hasnew = False
         gotit = False
-        # For each filename, check that it has the desired vturb and prefer *new* models:
+        # Check that filenames have the desired vturb and prefer *new* models:
         for afname in filenames:
-            if ('new' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
+            if 'new' in afname  and  amodel in afname:
                 hasnew = True
                 gotit = True
                 downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
@@ -492,9 +471,9 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                 else:
                     os.mkdir('atlas_models/raw_models/')
                     os.rename(afname,'atlas_models/raw_models/'+afname)
-        if(not hasnew):
+        if not hasnew:
             for afname in filenames:
-                if ('.pck19' in afname) and (met_dir+'k'+str(int(chosen_vturb)) in afname):
+                if '.pck19' in afname and  amodel in afname:
                     gotit = True
                     downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
                     if os.path.exists('atlas_models/raw_models/'):
@@ -504,7 +483,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                         os.rename(afname,'atlas_models/raw_models/'+afname)
             if not gotit:
                 for afname in filenames:
-                    if met_dir+'k'+str(int(chosen_vturb))+'.pck' in afname:
+                    if amodel+'.pck' in afname:
                         gotit = True
                         downloader('http://kurucz.harvard.edu/grids/grid'+met_dir+'/'+afname)
                         if os.path.exists('atlas_models/raw_models/'):
@@ -519,34 +498,40 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                   'for it.'.format(chosen_met, chosen_vturb))
             sys.exit()
 
-    # Now, check if the models in machine readable form have been generated. If not, generate them:
-    if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
+    # Check if the models in machine readable form have been generated.
+    # If not, generate them:
+    if not os.path.exists('atlas_models/' + amodel):
         # Now read the files and generate machine-readable files:
-        possible_paths = ['atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck',\
-                          'atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19',\
-                          'atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck']
+        possible_paths = [afile+'new.pck', afile+'.pck19', afile+'.pck']
 
         for i in range(len(possible_paths)):
             possible_path = possible_paths[i]
             if os.path.exists(possible_path):
                 lines = getFileLines(possible_path)
-                # Create folder for current metallicity and turbulent velocity if not created already:
-                if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))):
-                    os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb)))
+                # Create folder for current metallicity and turbulent
+                # velocity if not created already:
+                if not os.path.exists('atlas_models/' + amodel):
+                    os.mkdir('atlas_models/' + amodel)
                 # Save files in the folder:
                 while True:
                     TEFF,GRAVITY,LH = getATLASStellarParams(lines)
-                    if not os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF):
-                        os.mkdir('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF)
+                    if not os.path.exists('atlas_models/'+amodel+'/'+TEFF):
+                        os.mkdir('atlas_models/'+amodel+'/'+TEFF)
                     idx,mus = getIntensitySteps(lines)
                     save_mr_file = True
-                    if os.path.exists('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat'):
+                    if os.path.exists('atlas_models/'+amodel+'/'+TEFF+
+                                      '/grav_'+GRAVITY+'_lh_'+LH+'.dat'):
                         save_mr_file = False
                     if save_mr_file:
-                        f = open('atlas_models/'+met_dir+'k'+str(int(chosen_vturb))+'/'+TEFF+'/grav_'+GRAVITY+'_lh_'+LH+'.dat','w')
-                        f.write('#TEFF:'+TEFF+' METALLICITY:'+met_dir+' GRAVITY:'+GRAVITY+' VTURB:'+str(int(chosen_vturb))+' L/H: '+LH+'\n')
-                        f.write('#wav (nm) \t cos(theta):'+mus)
-                    for i in range(idx,len(lines)):
+                        f = open('atlas_models/'+amodel+'/'+TEFF+
+                                 '/grav_'+GRAVITY+'_lh_'+LH+'.dat','w')
+                        f.write('#TEFF:' + TEFF +
+                                ' METALLICITY:' + met_dir +
+                                ' GRAVITY:' + GRAVITY +
+                                ' VTURB:' + str(int(chosen_vturb)) +
+                                ' L/H: ' + LH + '\n')
+                        f.write('#wav (nm) \t cos(theta):' + mus)
+                    for i in range(idx, len(lines)):
                         line = lines[i]
                         idx = line.find('EFF')
                         idx2 = line.find('\x0c')
@@ -566,7 +551,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                         break
 
     # Now, assuming models are written in machine readable form, we can work:
-    chosen_met_folder = 'atlas_models/'+met_dir+'k'+str(int(chosen_vturb))
+    chosen_met_folder = 'atlas_models/' + amodel
 
     # Now check closest Teff for input star:
     t_diff = np.inf
@@ -598,11 +583,12 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
             grav_diff = c_g_diff
             chosen_filename = filename
 
-    print('\t + For input metallicity {}, effective temperature {} K, and '
-        '\n\t   log-gravity {}, and turbulent velocity {} km/s, closest '
-        '\n\t   combination is metallicity: {}, effective temperature: {} K,'
-        '\n\t   log-gravity {} and turbulent velocity of {} km/s.\n'
-        '\n\t + Chosen model file to be used:\n\t\t{:s}.\n'.
+    # Summary:
+    print('\t + For input metallicity {}, effective temperature {} K, and\n'
+        '\t   log-gravity {}, and turbulent velocity {} km/s, closest\n'
+        '\t   combination is metallicity: {}, effective temperature: {} K,\n'
+        '\t   log-gravity {} and turbulent velocity of {} km/s.\n\n'
+        '\t + Chosen model file to be used:\n\t\t{:s}.\n'.
           format(s_met, s_teff, s_grav, s_vturb, chosen_met, chosen_teff,
                  chosen_grav, chosen_vturb, chosen_filename))
 
@@ -611,9 +597,10 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 
 def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     """
-    Given input metallicities, gravities, effective temperature and microtiurbulent velocity,
-    this function estimates which model is the most appropiate (i.e., the closer one in
-    parameter space). If the model is not present in the system, it downloads it from
+    Given input metallicities, gravities, effective temperature and
+    microtiurbulent velocity, this function estimates which model is
+    the most appropiate (i.e., the closer one in parameter space).
+    If the model is not present in the system, it downloads it from
     the PHOENIX public library (phoenix.astro.physik.uni-goettingen.de).
     """
 
@@ -659,7 +646,7 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
             met_folder = 'p'+abs_met[0]+abs_met[1]
             model = 'Z+'+abs_met[0]+abs_met[1]
 
-    chosen_met_folder = model_path+met_folder
+    chosen_met_folder = model_path + met_folder
 
     # Check if folder exists. If it does not, create it and download the
     # PHOENIX models that are closer in temperature and gravity to the
@@ -723,45 +710,47 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
             grav_diff = c_g_diff
             chosen_fname = file
 
-    print('\t + For input metallicity {}, effective temperature {} K, and\n'
-          '\t   log-gravity {}, closest combination is metallicity: {},\n'
-          '\t   effective temperature: {} K, and log-gravity {}\n'
-          '\t + Chosen model file to be used:\n\t\t{:s}\n'.format(s_met, s_teff,
-                 s_grav, chosen_met, chosen_teff, chosen_grav, chosen_fname))
-
-    print('\t + Checking if PHOENIX model file is on the system...')
+    print('\t    + Checking if PHOENIX model file is on the system...')
     # Check if file is already downloaded. If not, download it from the PHOENIX website:
     if not os.path.exists(chosen_fname):
         print('\t    + Model file not found.')
         downloader('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/'+chosen_fname)
     else:
-        print('\t    + Model file found!')
+        print('\t    + Model file found.')
 
     os.chdir(cwd)
     chosen_path = chosen_met_folder + '/'+chosen_fname
 
-    return chosen_path, chosen_teff, chosen_grav, chosen_met,s_vturb
+    # Summary:
+    print('\t + For input metallicity {}, effective temperature {} K, and\n'
+          '\t   log-gravity {}, closest combination is metallicity: {},\n'
+          '\t   effective temperature: {} K, and log-gravity {}\n\n'
+          '\t + Chosen model file to be used:\n\t\t{:s}\n'.format(s_met, s_teff,
+                 s_grav, chosen_met, chosen_teff, chosen_grav, chosen_fname))
+
+    return chosen_path, chosen_teff, chosen_grav, chosen_met, s_vturb
+
 
 def get_response(min_w, max_w, response_function):
-
+    root = "response_functions/standard/"
     if(response_function.lower() == 'kphires'):
-       response_file = "response_functions/standard/kepler_response_hires1.txt"
+       response_file = root + "kepler_response_hires1.txt"
     elif(response_function.lower() == 'kplowres'):
-       response_file = "response_functions/standard/kepler_response_lowres1.txt"
+       response_file = root + "kepler_response_lowres1.txt"
     elif(response_function.lower() == 'irac1'):
-       response_file = "response_functions/standard/IRAC1_subarray_response_function.txt"
+       response_file = root + "IRAC1_subarray_response_function.txt"
     elif(response_function.lower() == 'irac2'):
-       response_file = "response_functions/standard/IRAC2_subarray_response_function.txt"
+       response_file = root + "IRAC2_subarray_response_function.txt"
     elif(response_function.lower() == 'wfc3'):
-       response_file = "response_functions/standard/WFC3_response_function.txt"
+       response_file = root + "WFC3_response_function.txt"
     else:
        if(os.path.exists("response_functions/"+response_function)):
           response_file = "response_functions/"+response_function
        else:
-          "Error: "+response_function+' is not a valid option. Exiting...'
+          print("Error: '{:s}' is not valid.".format(response_function))
           sys.exit()
     # Open the response file, which we assume has as first column wavelength and second column the response:
-    w,r = np.loadtxt(response_file,unpack=True)
+    w,r = np.loadtxt(response_file, unpack=True)
     if('kepler' in response_file):
          w = 10*w
          if min_w is None:
