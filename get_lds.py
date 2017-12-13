@@ -3,7 +3,10 @@ import sys
 import os
 import numpy as np
 import glob
-import urllib2
+try:     # Python2
+  import urllib2 as urllib
+except:  # Python3
+  import urllib
 import argparse
 import scipy.interpolate as si
 from copy import copy
@@ -12,6 +15,7 @@ try:
   import pyfits as fits
 except:
   import astropy.io.fits as fits
+
 
 ########## OPTIONS ###################################################
 
@@ -323,17 +327,18 @@ def downloader(url):
     This function downloads a file from the given url using wget.
     """
     file_name = url.split('/')[-1]
-    print '\t      + Downloading file '+file_name+' from '+url
+    print('\t      + Downloading file {:s} from {:s}.'.format(file_name, url))
     os.system('wget '+url)
+
 
 def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     """
-    Given input metallicities, gravities, effective temperature and microturbulent velocity,
-    this function estimates which model is the most appropiate (i.e., the closer one in
-    parameter space). If the model is not present in the system, it downloads it from
+    Given input metallicities, gravities, effective temperature and
+    microturbulent velocity, this function estimates which model is
+    the most appropiate (i.e., the closer one in parameter space).
+    If the model is not present in the system, it downloads it from
     Robert L. Kurucz's website (kurucz.harvard.edu/grids.html).
     """
-
     if not os.path.exists('atlas_models'):
        os.mkdir('atlas_models')
        os.mkdir('atlas_models/raw_models')
@@ -409,7 +414,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
 
     # Check if turbulent velocity is given. If not, set to 2 km/s:
     if(s_vturb==-1):
-       print '\t > No known turbulent velocity. Setting it to 2 km/s.'
+       print('\t > No known turbulent velocity. Setting it to 2 km/s.')
        s_vturb = 2.0
     else:
        if s_vturb not in possible_vturb:
@@ -422,7 +427,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
               if(c_vturb_diff < vturb_diff):
                  chosen_vturb = c_vturb_diff
                  vturb_diff = copy(c_vturb_diff)
-          print '\t > For input vturb '+str(s_vturb)+' km/s, closest vturb is '+str(chosen_vturb)+' km/s.'
+          print('\t > For input vturb {} km/s, closest vturb is {} km/s.'
+                .format(s_vturb, chosen_vturb))
        else:
           chosen_vturb = s_vturb
 
@@ -437,7 +443,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                 chosen_met = met
                 m_diff = copy(c_m_diff)
 
-       print '\t > For input metallicity '+str(s_met)+', closest metallicity is '+str(chosen_met)+'.'
+       print('\t > For input metallicity {}, closest metallicity is {}.'
+             .format(s_met, chosen_met))
     else:
        chosen_met = s_met
 
@@ -451,16 +458,16 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
        met_string = str(np.abs(chosen_met)).split('.')
        met_dir = 'p'+met_string[0]+met_string[1]
 
-    print '\t    + Checking if ATLAS model file is on the system...'
+    print('\t    + Checking if ATLAS model file is on the system ...')
     if os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'new.pck') or \
        os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck19') or \
        os.path.exists('atlas_models/raw_models/i'+met_dir+'k'+str(int(chosen_vturb))+'.pck'):
-        print '\t    + Model file found!'
+        print('\t    + Model file found.')
     else:
         # If not in the system, download it from Kurucz's website. First, check all possible
         # files to download:
-        print '\t    + Model file not found.'
-        response = urllib2.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/')
+        print('\t    + Model file not found.')
+        response = urllib.urlopen('http://kurucz.harvard.edu/grids/grid'+met_dir+'/')
         html = response.read()
         ok = True
         filenames = []
@@ -507,8 +514,10 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
                             os.mkdir('atlas_models/raw_models/')
                             os.rename(afname,'atlas_models/raw_models/'+afname)
         if not gotit:
-            print '\t > No model with closest metallicity of '+str(chosen_met)+' and closest vturb of '+str(chosen_vturb)+' km/s found.'
-            print '\t   Please, modify the input values of the target and select other stellar parameters for it.'
+            print('\t > No model with closest metallicity of {} and closest '
+                  'vturb of {} km/s found.\n\t   Please, modify the input '
+                  'values of the target and select other stellar parameters '
+                  'for it.'.format(chosen_met, chosen_vturb))
             sys.exit()
 
     # Now, check if the models in machine readable form have been generated. If not, generate them:
@@ -574,7 +583,8 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
             chosen_teff_folder = tefffolder
             t_diff = c_t_diff
 
-    print '\t    + For input effective temperature '+str(s_teff)+', closest effective temperature is '+str(chosen_teff)+'.'
+    print('\t    + For input effective temperature {:.1f} K, closest value '
+          'is {:.0f} K.'.format(s_teff, chosen_teff))
     # Now check closest gravity and turbulent velocity:
     grav_diff = np.inf
     chosen_grav = 0.0
@@ -589,14 +599,16 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
             grav_diff = c_g_diff
             chosen_filename = filename
 
-    print '\t    + For input metallicity '+str(s_met)+', effective temperature '+str(s_teff)+' K, and '
-    print '\t      log-gravity '+str(s_grav)+', and turbulent velocity '+str(s_vturb)+' km/s, closest '
-    print '\t      combination is metallicity: '+str(chosen_met)+', effective temperature: '+str(chosen_teff)+' K,'
-    print '\t      log-gravity '+str(chosen_grav)+' and turbulent velocity of '+str(chosen_vturb)+' km/s.'
-    print ''
-    print '\t    + Chosen model file to be used: '+chosen_filename
-    print '\n'
+    print('\t + For input metallicity {}, effective temperature {} K, and '
+        '\n\t   log-gravity {}, and turbulent velocity {} km/s, closest '
+        '\n\t   combination is metallicity: {}, effective temperature: {} K,'
+        '\n\t   log-gravity {} and turbulent velocity of {} km/s.\n'
+        '\n\t + Chosen model file to be used:\n\t\t{:s}.\n'.
+          format(s_met, s_teff, s_grav, s_vturb, chosen_met, chosen_teff,
+                 chosen_grav, chosen_vturb, chosen_filename))
+
     return chosen_filename, chosen_teff, chosen_grav, chosen_met,chosen_vturb
+
 
 def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     """
@@ -614,7 +626,7 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
 
     # In PHOENIX models, all of them are computed with vturb = 2 km/2
     if(s_vturb==-1):
-       print '\t    + No known turbulent velocity. Setting it to 2 km/s.'
+       print('\t    + No known turbulent velocity. Setting it to 2 km/s.')
        s_vturb = 2.0
 
     possible_mets = np.array([0.0, -0.5, -1.0, 1.0, -1.5, -2.0, -3.0, -4.0])
@@ -630,7 +642,8 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
                 chosen_met = met
                 m_diff = copy(c_m_diff)
 
-        print '\t    + For input metallicity '+str(s_met)+', closest metallicity is '+str(chosen_met)+'.'
+        print('\t    + For input metallicity {}, closest value is {}.'.
+              format(s_met, chosen_met))
     else:
         chosen_met = s_met
 
@@ -660,9 +673,12 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
     # See if in a past call the file list for the given metallicity was
     # saved; if not, retrieve it from the PHOENIX website:
     if os.path.exists('file_list.dat'):
-       all_files = np.loadtxt('file_list.dat',unpack=True,dtype=np.dtype('S'))
+       with open('file_list.dat') as f:
+           all_files = f.readlines()
+       for i in np.arange(len(all_files)):
+           all_files[i] = all_files[i].strip()
     else:
-       response = urllib2.urlopen('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/')
+       response = urllib.urlopen('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/')
        html = response.read()
        all_files = []
        while True:
@@ -687,11 +703,13 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
             chosen_teff = teff
             t_diff = c_t_diff
 
-    print '\t    + For input effective temperature '+str(s_teff)+', closest effective temperature is '+str(chosen_teff)+'.'
+    print('\t    + For input effective temperature {:.1f} K, closest '
+          'value is {:.0f} K.'.format(s_teff, chosen_teff))
 
     teff_files = []
+    teff_string = "{:05.0f}".format(chosen_teff)
     for file in all_files:
-        if str(int(chosen_teff)) in file:
+        if teff_string in file:
             teff_files.append(file)
 
     # Now check closest gravity:
@@ -706,20 +724,19 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
             grav_diff = c_g_diff
             chosen_fname = file
 
-    print '\t    + For input metallicity '+str(s_met)+', effective temperature '+str(s_teff)+' K, and '
-    print '\t      log-gravity '+str(s_grav)+', closest combination is metallicity: '+str(chosen_met)+', '
-    print '\t      effective temperature: '+str(chosen_teff)+' K, and log-gravity '+str(chosen_grav)
-    print ''
-    print '\t    + Chosen model file to be used: '+chosen_fname
-    print '\n'
+    print('\t + For input metallicity {}, effective temperature {} K, and\n'
+          '\t   log-gravity {}, closest combination is metallicity: {},\n'
+          '\t   effective temperature: {} K, and log-gravity {}\n'
+          '\t + Chosen model file to be used:\n\t\t{:s}\n'.format(s_met, s_teff,
+                 s_grav, chosen_met, chosen_teff, chosen_grav, chosen_fname))
 
-    print '\t    + Checking if PHOENIX model file is on the system...'
+    print('\t + Checking if PHOENIX model file is on the system...')
     # Check if file is already downloaded. If not, download it from the PHOENIX website:
     if not os.path.exists(chosen_fname):
-        print '\t    + Model file not found.'
+        print('\t    + Model file not found.')
         downloader('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/'+chosen_fname)
     else:
-        print '\t    + Model file found!'
+        print('\t    + Model file found!')
 
     os.chdir(cwd)
     chosen_path = chosen_met_folder + '/'+chosen_fname
@@ -752,18 +769,20 @@ def get_response(min_w, max_w, response_function):
             min_w = min(w)
          if max_w is None:
             max_w = max(w)
-         print '\t > Kepler response file detected. Changing from nanometers to Angstroms...'
-         print '\t > Minimum wavelength:',min(w),'A'
-         print '\t > Maximum wavelength:',max(w),'A'
+         print('\t > Kepler response file detected.  Switch from '
+               'nanometers to Angstroms.')
+         print('\t > Minimum wavelength: {} A.\n'
+               '\t > Maximum wavelength: {} A.'.format(min(w), max(w)))
     elif('IRAC' in response_file):
          w = 1e4*w
          if min_w is None:
             min_w = min(w)
          if max_w is None:
             max_w = max(w)
-         print '\t > IRAC response file detected. Changing from microns to Angstroms...'
-         print '\t > Minimum wavelength:',min(w),'A'
-         print '\t > Maximum wavelength:',max(w),'A'
+         print('\t > IRAC response file detected.  Switch from microns to '
+               'Angstroms.')
+         print('\t > Minimum wavelength: {} A.\n'
+               '\t > Maximum wavelength: {} A.'.format(min(w), max(w)))
     else:
          if min_w is None:
             min_w = min(w)
@@ -801,7 +820,7 @@ def read_ATLAS(chosen_filename, model):
     with open(chosen_filename, 'r') as f:
       lines = f.readlines()
     # Remove comments and blank lines:
-    for i in np.flip(np.arange(len(lines)),0):
+    for i in np.flipud(np.arange(len(lines))):
         if lines[i].strip() == "" or lines[i].strip().startswith("#"):
             lines.pop(i)
 
@@ -983,35 +1002,32 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
 
     """
 
-    print '\n'
-    print '\t Reading response functions'
-    print '\t --------------------------\n'
+    print('\n\t Reading response functions\n\t --------------------------')
 
     # Get the response file minimum and maximum wavelengths and all the wavelengths and values:
     min_w, max_w, S_wav, S_res = get_response(min_w, max_w, response_function)
 
-    ######################################################################################
+    ######################################################################
     # IF USING ATLAS MODELS....
-    ######################################################################################
-
+    ######################################################################
     if 'A' in model:
+        # Search for best-match ATLAS9 model for the input stellar parameters:
+        print('\n\t ATLAS modelling\n\t ---------------\n'
+              '\t > Searching for best-match Kurucz model ...')
+        chosen_filename, chosen_teff, chosen_grav, chosen_met, \
+           chosen_vturb = ATLAS_model_search(s_met, s_grav, s_teff, s_vturb)
 
-        # Now, search for best-match ATLAS9 model for the input stellar parameters:
-        print '\n'
-        print '\t ATLAS modelling'
-        print '\t ---------------\n'
-        print '\t > Searching for best-match Kurucz model...'
-        chosen_filename, chosen_teff, chosen_grav, chosen_met, chosen_vturb = ATLAS_model_search(s_met, s_grav, s_teff, s_vturb)
-
-        # Read wavelengths and intensities (I) from ATLAS models. If model is "A100", it also
-        # returns the interpolated intensities (I100) and the associated mu values (mu100).
+        # Read wavelengths and intensities (I) from ATLAS models.
+        # If model is "A100", it also returns the interpolated
+        # intensities (I100) and the associated mu values (mu100).
         # If not, those arrays are empty:
         wavelengths, I, I100, mu, mu100 = read_ATLAS(chosen_filename, model)
 
-        # Now use these intensities to obtain the (normalized) integrated intensities with
-        # the response function:
-        I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
-                                     atlas_correction, photon_correction, interpolation_order,model)
+        # Now use these intensities to obtain the (normalized) integrated
+        # intensities with the response function:
+        I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res,
+                                    S_wav, atlas_correction, photon_correction,
+                                    interpolation_order, model)
 
         # Finally, obtain the limb-darkening coefficients:
         if(model == "AS"):
@@ -1046,32 +1062,29 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
                   '\t'+str(np.round(chosen_vturb,2))+'\t'+str(a)+'\t'+str(u1)+'\t'+str(u2)+'\t'+str(b1)+'\t'+str(b2)+'\t'+str(b3)+'\t'+str(c1)+'\t'+str(c2)+'\t'+\
                   str(c3)+'\t'+str(c4)+'\t'+str(l1)+'\t'+str(l2)+'\t'+str(e1)+'\t'+str(e2)+'\t'+str(s1)+'\t'+str(s2)+'\n')
 
-        print '\t > Done! \n'
-        print '\t ##########################################################\n'
+        print('\t > Done! \n\t {:s}\n'.format(70*'#'))
 
-    ######################################################################################
+    ######################################################################
     # IF USING PHOENIX MODELS....
-    ######################################################################################
+    ######################################################################
 
     elif 'P' in model:
-
-        # Now, search for best-match PHOENIX model for the input stellar parameters:
-        print '\n'
-        print '\t PHOENIX modelling'
-        print '\t -----------------\n'
-        print '\t > Searching for best-match PHOENIX model...'
-        chosen_path, chosen_teff, chosen_grav, chosen_met, chosen_vturb = PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb)
+        # Search for best-match PHOENIX model for the input stellar parameters:
+        print('\n\t PHOENIX modelling\n\t -----------------\n'
+              '\t > Searching for best-match PHOENIX model ...')
+        chosen_path, chosen_teff, chosen_grav, chosen_met, \
+           chosen_vturb = PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb)
 
         # Read PHOENIX model wavelenghts, intensities and mus:
-        print '\t > Reading PHOENIX model...'
         wavelengths, I, mu = read_PHOENIX(chosen_path)
 
-        # Now use these intensities to obtain the (normalized) integrated intensities with
-        # the response function:
-        I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, photon_correction, interpolation_order)
+        # Now use these intensities to obtain the (normalized) integrated
+        # intensities with the response function:
+        I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav,
+                                        photon_correction, interpolation_order)
 
         # Obtain correction due to spherical extension. First, obtain the value of r_max:
-        r, fine_r_max = get_rmax(mu,I0)
+        r, fine_r_max = get_rmax(mu, I0)
 
         # Now obtain the new values of r for each intensity point and leave out the ones that
         # have r>1:
@@ -1085,7 +1098,8 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
         # intensities:
         if(model == 'P100'):
             mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
-            I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100, S_res, S_wav, photon_correction, interpolation_order)
+            I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100,
+                        S_res, S_wav, photon_correction, interpolation_order)
 
        # Now define each possible model and fit LDs:
         if(model == 'PQS'): # Quasi-spherical model, as defined by Claret et al. (2012), mu>=0.1
@@ -1128,20 +1142,19 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
                   '\t'+str(np.round(chosen_vturb,2))+'\t'+str(a)+'\t'+str(u1)+'\t'+str(u2)+'\t'+str(b1)+'\t'+str(b2)+'\t'+str(b3)+'\t'+str(c1)+'\t'+str(c2)+'\t'+\
                   str(c3)+'\t'+str(c4)+'\t'+str(l1)+'\t'+str(l2)+'\t'+str(e1)+'\t'+str(e2)+'\t'+str(s1)+'\t'+str(s2)+'\n')
 
-        print '\t > Done! \n'
-        print '\t ##########################################################\n'
+        print('\t > Done! \n\t {:s}\n'.format(70*'#'))
     return 1
 
-print '\n'
-print '\t ##########################################################'
-print ''
-print '\t             Limb Darkening Calculations '+version+'       '
-print '\t                '
-print '\t      Author: Nestor Espinoza (nespino@astro.puc.cl) \n \n'
-print '\t DISCLAIMER: If you make use of this code for your research,'
-print '\t please consider citing Espinoza & Jordan (2015)\n\n'
+print('\n\t ##########################################################\n'
+      '\n\t             Limb Darkening Calculations {:s}\n'
+      '\n\t      Author: Nestor Espinoza (nespino@astro.puc.cl)\n'
+      '\n\t DISCLAIMER: If you make use of this code for your research,\n'
+      '\t please consider citing Espinoza & Jordan (2015)\n'
+      '\n\t ##########################################################'.
+       format(version))
+
 fout = open('results/'+output_filename,'w')
-fout.write('######################################################################################################################\n')
+fout.write('############################################################\n')
 fout.write('# \n')
 fout.write('# Limb Darkening Calculations '+version+' \n')
 fout.write('# \n')
@@ -1156,7 +1169,7 @@ fout.write('#               Ashley Villar    (vvillar@cfa.harvard.edu) \n')
 fout.write('# \n')
 fout.write('# DISCLAIMER: If you make use of this code for your research, please consider citing Espinoza & Jordan (2015)\n')
 fout.write('# \n')
-fout.write('#---------------------------------------------------------------------------------------------------------------------------------------------\n')
+fout.write('#------------------------------------------------------------\n')
 fout.write('# Name\tLD fit\tRF\tT_eff\tlog(g)\t[M/H]\tvturb\ta       \tu1      \tu2      \tb1      \tb2      \tb3      \tc1      \t c2'+\
               '      \tc3      \tc4      \tl1      \tl2      \te1      \te2              \ts1      \ts2      \n')
 
@@ -1192,11 +1205,12 @@ while(ok):
      response_function = RF
      models = FT.split(',')
      for model in models:
-         out = save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
-                        s_met, s_grav, s_teff, s_vturb, min_w,max_w)
+         out = save_lds(fout, name, response_function, model, atlas_correction,
+               photon_correction, s_met, s_grav, s_teff, s_vturb, min_w, max_w)
          if(out==-1):
-            print 'Error with target '+name+'. Not saved...'
+            print('Error with target {:s}. Not saved...'.format(name))
 
 fout.close()
 
-print '\t > Program finished without problems. The results were saved in the "results" folder. \n'
+print('\t > Program finished without problems.\n'
+      '\t   The results were saved in the "results" folder.\n')
