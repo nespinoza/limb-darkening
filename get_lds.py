@@ -52,7 +52,70 @@ if args.ifile is not None:
 if args.ofile is not None:
    output_filename = args.ofile
 
-##############################################################################################################################################
+
+def FixSpaces(intervals):
+    s = ''
+    i = 0
+    while True:
+        if intervals[i]=='':
+            intervals.pop(i)
+        else:
+            i = i+1
+            if len(intervals)==i:
+                break
+        if len(intervals)==i:
+            break
+    for i in range(len(intervals)):
+        if i!=len(intervals)-1:
+            s = s+str(np.double(intervals[i]))+'\t'
+        else:
+            s = s+str(np.double(intervals[i]))+'\n'
+    return s
+
+
+def getFileLines(fname):
+    with open(fname, 'r') as f:
+        l = f.readline()
+        if l.find('\n') == -1:
+            lines = l.split('\r')
+        else:
+            f.seek(0)
+            l = f.read()
+            lines = l.split('\n')
+    return lines
+
+
+def getATLASStellarParams(lines):
+    for i in range(len(lines)):
+        line = lines[i]
+        idx = line.find('EFF')
+        if idx != -1:
+            idx2 = line.find('GRAVITY')
+            TEFF    = line[idx +4:idx2-1]
+            GRAVITY = line[idx2+8:idx2+8+5]
+            VTURB   = line[idx +6:idx2]
+            idx = line.find('L/H')
+            if idx == -1:
+                LH = '1.25'
+            else:
+                LH = line[idx+4:]
+            break
+    return str(int(np.double(TEFF))), str(np.round(np.double(GRAVITY),2)), \
+           str(np.round(np.double(LH),2))
+
+
+def getIntensitySteps(lines):
+    for j in range(len(lines)):
+        line = lines[j]
+        idx = line.find('intervals')
+        if idx != -1:
+            line = lines[j+1]
+            intervals = line.split(' ')
+            break
+
+    s = FixSpaces(intervals)
+    return j+2, s
+
 
 version = 'v.1.0.'
 def get_derivatives(rP,IP):
@@ -342,70 +405,6 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     if not os.path.exists('atlas_models'):
        os.mkdir('atlas_models')
        os.mkdir('atlas_models/raw_models')
-
-    def getFileLines(fname):
-        f = open(fname,'r')
-        l = f.readline()
-        idx = l.find('\n')
-        if(idx==-1):
-            lines = l.split('\r')
-        else:
-            f.close()
-            f = open(fname,'r')
-            l = f.read()
-            lines = l.split('\n')
-        f.close()
-        return lines
-
-    def getATLASStellarParams(lines):
-        for i in range(len(lines)):
-            line = lines[i]
-            idx = line.find('EFF')
-            if(idx!=-1):
-                idx2 = line.find('GRAVITY')
-                TEFF = (line[idx+4:idx2-1])
-                GRAVITY = (line[idx2+8:idx2+8+5])
-                VTURB = (line[idx+6:idx2])
-                idx = line.find('L/H')
-                if(idx==-1):
-                    LH = '1.25'
-                else:
-                    LH = line[idx+4:]
-                break
-        return str(int(np.double(TEFF))),str(np.round(np.double(GRAVITY),2)),str(np.round(np.double(LH),2))
-
-    def getIntensitySteps(lines):
-        for j in range(len(lines)):
-            line = lines[j]
-            idx = line.find('intervals')
-            if(idx!=-1):
-                line = lines[j+1]
-                intervals = line.split(' ')
-                break
-
-        s = FixSpaces(intervals)
-        return j+2,s
-
-    def FixSpaces(intervals):
-        s = ''
-        ok = True
-        i = 0
-        while(ok):
-            if(intervals[i]==''):
-                intervals.pop(i)
-            else:
-                i=i+1
-                if(len(intervals)==i):
-                    break
-            if(len(intervals)==i):
-                break
-        for i in range(len(intervals)):
-            if(i!=len(intervals)-1):
-                s=s+str(np.double(intervals[i]))+'\t'
-            else:
-                s=s+str(np.double(intervals[i]))+'\n'
-        return s
-
 
     # This is the list of all the available metallicities in Kurucz's website:
     possible_mets = np.array([-0.1, -0.2, -0.3, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5, -5.0, 0.0, 0.1, 0.2, 0.3, 0.5, 1.0])
