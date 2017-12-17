@@ -16,18 +16,7 @@ try:
 except:
   import astropy.io.fits as fits
 
-
-########## OPTIONS ###################################################
-
-# Order of the interpolation done for sampling intensities:
-interpolation_order = 1
-
-# Define if you will apply the corrections or not. First the ATLAS one,
-# if True, convert ATLAS intensities using c/lambda**2 (ATLAS intensities
-# are given per frequency):
-atlas_correction = True
-# Now decide if you want to apply photon counting correction, lambda/hc:
-photon_correction = True
+rootdir = os.path.dirname(os.path.realpath(__file__))
 
 
 def parse():
@@ -711,7 +700,7 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
         print('\t    + Model file found.')
 
     os.chdir(cwd)
-    chosen_path = chosen_met_folder + '/'+chosen_fname
+    chosen_path = chosen_met_folder + '/' + chosen_fname
 
     # Summary:
     print('\t + For input metallicity {}, effective temperature {} K, and\n'
@@ -741,8 +730,9 @@ def get_response(min_w, max_w, response_function):
        else:
           print("Error: '{:s}' is not valid.".format(response_function))
           sys.exit()
-    # Open the response file, which we assume has as first column wavelength and second column the response:
-    w,r = np.loadtxt(response_file, unpack=True)
+    # Open the response file, which we assume has as first column wavelength
+    # and second column the response:
+    w, r = np.loadtxt(response_file, unpack=True)
     if('kepler' in response_file):
          w = 10*w
          if min_w is None:
@@ -769,8 +759,8 @@ def get_response(min_w, max_w, response_function):
          if max_w is None:
             max_w = max(w)
 
-    # Fit a univariate spline with s=0 (i.e., a node in each data-point) and k = 1 (linear spline).
-    S = si.UnivariateSpline(w,r,s=0,k=1)
+    # Fit a univariate linear spline (k=1) with s=0 (a node in each data-point):
+    S = si.UnivariateSpline(w, r, s=0, k=1)
     if type(min_w) is list:
        S_wav = []
        S_res = []
@@ -814,10 +804,10 @@ def read_ATLAS(chosen_filename, model):
         splitted = lines[i].split()
         if(len(splitted)==18):
             wavelengths[i] = np.double(splitted[0])*10  # nano to angstrom
-            intensities[i] = np.array(splitted[1:], np.double)                     # Get the intensities.
+            intensities[i] = np.array(splitted[1:], np.double)
             ndigits = len(str(int(intensities[i,1])))
             # Only if I(1) is different from zero, fit the LDs:
-            if(intensities[i,0]!=0.0):
+            if intensities[i,0] != 0.0:
                 # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
                 intensities[i,1:] = intensities[i,1:]/1e5
                 # Normalzie intensities wrt the first one:
@@ -858,11 +848,13 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav,
     for i in range(nmus):
         # Interpolate the intensities:
         if(model == "A100"):
-            Ifunc = si.UnivariateSpline(wavelengths, I100[:,i], s=0, k=interpolation_order)
+            Ifunc = si.UnivariateSpline(wavelengths, I100[:,i], s=0,
+                                        k=interpolation_order)
         else:
-            Ifunc = si.UnivariateSpline(wavelengths, I[:,i], s=0, k=interpolation_order)
-        # If several wavelength ranges where given, integrate through each chunk one at a time.
-        # If not, integrate the given chunk:
+            Ifunc = si.UnivariateSpline(wavelengths, I[:,i], s=0,
+                                        k=interpolation_order)
+        # If several wavelength ranges where given, integrate through
+        # each chunk one at a time.  If not, integrate the given chunk:
         if type(S_res) is list:
             integration_results = 0.0
             for j in range(len(S_res)):
@@ -946,18 +938,18 @@ def get_rmax(mu, I0):
 
 
 def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
-    mu100 = np.arange(0.01,1.01,0.01)
+    mu100 = np.arange(0.01, 1.01, 0.01)
     I100 = np.zeros((len(wavelengths),len(mu100)))
     for i in range(len(wavelengths)):
         # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
-        II = si.UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3)
+        II = si.UnivariateSpline(new_mu, I[i,idx_new], s=0, k=3)
         I100[i] = II(mu100)
     return mu100, I100
 
 
 def calc_lds(name, response_function, model, atlas_correction,
              photon_correction, s_met, s_grav, s_teff, s_vturb,
-             min_w=None, max_w=None, fout=None):
+             interpolation_order, min_w=None, max_w=None, fout=None):
     """
     Generate the limb-darkening coefficients.  Note that response_function
     can be a string with the filename of a response function not in the
@@ -1003,7 +995,8 @@ def calc_lds(name, response_function, model, atlas_correction,
 
     print('\n\t Reading response functions\n\t --------------------------')
 
-    # Get the response file minimum and maximum wavelengths and all the wavelengths and values:
+    # Get the response file minimum and maximum wavelengths and all the
+    # wavelengths and values:
     min_w, max_w, S_wav, S_res = get_response(min_w, max_w, response_function)
 
     ######################################################################
@@ -1150,7 +1143,8 @@ def calc_lds(name, response_function, model, atlas_correction,
     return LDC
 
 
-def lds(ifile=None, ofile=None):
+def lds(ifile=None, ofile=None, interpolation_order=1,
+        atlas_correction=True, photon_correction=True):
     """
     Compute limb-darkening coefficients.
 
@@ -1160,6 +1154,12 @@ def lds(ifile=None, ofile=None):
        Filename with the user inputs.
     ofile: String
        If not None, filename where to write the LCDs.
+    interpolation_order: Integer
+    atlas_correction: Bool
+       If True, convert ATLAS intensities using c/lambda**2 (ATLAS
+       intensities are given per frequency).
+    photon_correction: Bool
+       If True, apply photon counting correction (lambda/hc).
 
     Returns
     -------
@@ -1227,7 +1227,8 @@ def lds(ifile=None, ofile=None):
          for model in models:
              LDC = calc_lds(name, response_function, model,
                             atlas_correction, photon_correction, s_met, s_grav,
-                            s_teff, s_vturb, min_w, max_w, fout)
+                            s_teff, s_vturb, interpolation_order,
+                            min_w, max_w, fout)
     if ofile is not None:
         fout.close()
         print('\t > Program finished without problems.\n'
