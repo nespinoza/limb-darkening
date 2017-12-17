@@ -367,24 +367,23 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     possible_vturb = np.array([0.0, 2.0, 4.0, 8.0])
 
     # Check if turbulent velocity is given. If not, set to 2 km/s:
-    if(s_vturb==-1):
-       print('\t > No known turbulent velocity. Setting it to 2 km/s.')
-       s_vturb = 2.0
+    if s_vturb == -1:
+         print('\t > No known turbulent velocity. Setting it to 2 km/s.')
+         s_vturb = 2.0
+    if s_vturb not in possible_vturb:
+        # Check closest vturb to input:
+        vturb_diff = np.inf
+        chosen_vturb = np.inf
+        for vturb in possible_vturb:
+            # Estimate distance between current and input vturb:
+            c_vturb_diff = np.abs(vturb - s_vturb)
+            if c_vturb_diff < vturb_diff:
+                chosen_vturb = c_vturb_diff
+                vturb_diff = copy(c_vturb_diff)
+        print('\t > For input vturb {} km/s, closest vturb is {} km/s.'.
+              format(s_vturb, chosen_vturb))
     else:
-       if s_vturb not in possible_vturb:
-          # Check closest vturb to input:
-          vturb_diff = np.inf
-          chosen_vturb = np.inf
-          for vturb in possible_vturb:
-              # Estimate distance between current and input vturb:
-              c_vturb_diff = np.abs(vturb - s_vturb)
-              if(c_vturb_diff < vturb_diff):
-                 chosen_vturb = c_vturb_diff
-                 vturb_diff = copy(c_vturb_diff)
-          print('\t > For input vturb {} km/s, closest vturb is {} km/s.'
-                .format(s_vturb, chosen_vturb))
-       else:
-          chosen_vturb = s_vturb
+        chosen_vturb = s_vturb
 
     if s_met not in possible_mets:
        # Now check closest metallicity model for input star:
@@ -402,8 +401,9 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
     else:
        chosen_met = s_met
 
-    # Check if the intensity file for the calculated metallicity and vturb is on the atlas_models folder:
-    if chosen_met == 0.0:
+    # Check if the intensity file for the calculated metallicity and
+    # vturb is on the atlas_models folder:
+    if   chosen_met == 0.0:
        met_dir = 'p00'
     elif chosen_met < 0:
        met_string = str(np.abs(chosen_met)).split('.')
@@ -859,7 +859,7 @@ def integrate_response_ATLAS(wavelengths, I, mu, S_res, S_wav,
                     integrand = (S_res[j]*Ifunc(S_wav[j])) * (S_wav[j])
                 else:
                     integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
-                integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
+                integration_results += np.trapz(integrand, x=S_wav[j])
         else:
             if atlas_correction and photon_correction:
                 integrand = (S_res*Ifunc(S_wav)) / S_wav
@@ -890,8 +890,7 @@ def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction,
                     integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
                 else:
                     integrand = S_res[j]*Ifunc(S_wav[j])
-                integration_results = integration_results + \
-                                      np.trapz(integrand, x=S_wav[j])
+                integration_results += np.trapz(integrand, x=S_wav[j])
 
         else:
             integrand = S_res * Ifunc(S_wav)  #lambda x,I,S: I(x)*S(x)
@@ -936,54 +935,55 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     return mu100, I100
 
 
-def calc_lds(name, response_function, model, atlas_correction,
-             photon_correction, s_met, s_grav, s_teff, s_vturb,
-             interpolation_order, min_w=None, max_w=None, fout=None):
+def calc_lds(name, response_function, model, s_met, s_grav, s_teff,
+             s_vturb, min_w=None, max_w=None, atlas_correction=True,
+             photon_correction=True, interpolation_order=1, fout=None):
     """
     Generate the limb-darkening coefficients.  Note that response_function
     can be a string with the filename of a response function not in the
     list. The file has to be in the response_functions folder.
 
-    INPUTS:
-     name: String
-        Name of the object we are working on.
-     response_function:
-        Number of a standard response function or filename of a response
-        function under the response_functions folder.
-     model:
-        Model atmosphere to be used.
-     atlas_correction:
-        True if corrections in the integrand of the ATLAS models should
-        be applied (i.e., transformation of ATLAS intensities given in
-        frequency to per wavelength)
-     photon_correction:
-        If True, correction for photon-counting devices is used.
-     s_met:
-        Metallicity of the star.
-     s_grav:
-        log_g of the star (cgs).
-     s_teff:
-        Effective temperature of the star (K).
-     s_vturb:
-        Turbulent velocity in the star (km/s)
-     interpolation_order: Integer
-        Degree of the spline interpolation order.
-     min_w: Float
-        Minimum wavelength to integrate (if None, use the minimum wavelength
-        of the response function).
-     max_w: Float
-        Maximum wavelength to integrate (if None, use the maximum wavelength
-        of the response function).
-     fout: FILE
-        If not None, file where to save the LDCs.
+    Parameters
+    ----------
+    name: String
+       Name of the object we are working on.
+    response_function: String
+       Number of a standard response function or filename of a response
+       function under the response_functions folder.
+    model: String
+       Fitting technique model.
+    s_met: Float
+       Metallicity of the star.
+    s_grav: Float
+       log_g of the star (cgs).
+    s_teff: Float
+       Effective temperature of the star (K).
+    s_vturb: Float
+       Turbulent velocity in the star (km/s)
+    min_w: Float
+       Minimum wavelength to integrate (if None, use the minimum wavelength
+       of the response function).
+    max_w: Float
+       Maximum wavelength to integrate (if None, use the maximum wavelength
+       of the response function).
+    atlas_correction: Bool
+       True if corrections in the integrand of the ATLAS models should
+       be applied (i.e., transformation of ATLAS intensities given in
+       frequency to per wavelength)
+    photon_correction: Bool
+       If True, correction for photon-counting devices is used.
+    interpolation_order: Integer
+       Degree of the spline interpolation order.
+    fout: FILE
+       If not None, file where to save the LDCs.
 
-    OUTPUTS
-       LDC: 1D float tuple
-          The linear (a), quadratic (u1, u2), three-parameter (b1, b2, b3),
-          non-linear (c1, c2, c3, c4), logarithmic (l1, l2),
-          exponential (e1, e2), and square-root laws (s1, s2).
+    Returns
+    -------
+    LDC: 1D float tuple
+       The linear (a), quadratic (u1, u2), three-parameter (b1, b2, b3),
+       non-linear (c1, c2, c3, c4), logarithmic (l1, l2),
+       exponential (e1, e2), and square-root laws (s1, s2).
     """
-
     print('\n\t Reading response functions\n\t --------------------------')
 
     # Get the response file minimum and maximum wavelengths and all the
@@ -1014,15 +1014,13 @@ def calc_lds(name, response_function, model, atlas_correction,
 
         # Finally, obtain the limb-darkening coefficients:
         if model == "AS":
-            # Select indices as in Sing (2010):
-            idx = mu >= 0.05
+            idx = mu >= 0.05  # Select indices as in Sing (2010)
         else:
             idx = mu >= 0.0 # Select all
 
     ######################################################################
     # IF USING PHOENIX MODELS....
     ######################################################################
-
     elif 'P' in model:
         # Search for best-match PHOENIX model for the input stellar parameters:
         print('\n\t PHOENIX modelling\n\t -----------------\n'
@@ -1043,7 +1041,7 @@ def calc_lds(name, response_function, model, atlas_correction,
 
         # Now get r for each intensity point and leave out those that have r>1:
         new_r = r/fine_r_max
-        idx_new = np.where(new_r<=1.0)[0]
+        idx_new = new_r <= 1.0
         new_r = new_r[idx_new]
         # Reuse variable names:
         mu = np.sqrt(1.0-(new_r**2))
@@ -1051,7 +1049,7 @@ def calc_lds(name, response_function, model, atlas_correction,
 
         # Now, if the model requires it, obtain 100-mu points interpolated
         # in this final range of "usable" intensities:
-        if(model == 'P100'):
+        if model == 'P100':
             mu, I100 = get100_PHOENIX(wavelengths, I, mu, idx_new)
             I0 = integrate_response_PHOENIX(wavelengths, I100, mu,
                         S_res, S_wav, photon_correction, interpolation_order)
@@ -1098,18 +1096,55 @@ def calc_lds(name, response_function, model, atlas_correction,
     return LDC
 
 
-def lds(ifile=None, ofile=None, interpolation_order=1,
+def lds(Teff=None, grav=None, metal=None, vturb=-1,
+        RF=None, FT=None, min_w=None, max_w=None,
+        name="", ifile=None, ofile=None,
+        interpolation_order=1,
         atlas_correction=True, photon_correction=True):
     """
     Compute limb-darkening coefficients.
 
     Parameters
     ----------
+    Teff: Float
+       Effective temperature of the star (K).
+    grav: Float
+       log_g of the star (cgs).
+    metal: Float
+       Metallicity of the star.
+    vturb: Float
+       Turbulent velocity in the star (km/s)
+    RF: String
+       A standard response function or filename of a response
+       function under the response_functions folder.
+    FT: String
+       Limb-darkening fitting technique model.  Select one or more
+       (comma separated, no blank spaces) model from the following list:
+          A17:  LDs using ATLAS with all its 17 angles
+          A100: LDs using ATLAS models interpolating 100 mu-points with a
+                cubic spline (i.e., like Claret & Bloemen, 2011)
+          AS:   LDs using ATLAS with 15 angles for linear, quadratic and
+                three-parameter laws, bit 17 angles for the non-linear
+                law (i.e., like Sing, 2010)
+          P:    LDs using PHOENIX models (Husser et al., 2013).
+          PS:   LDs using PHOENIX models using the methods of Sing (2010).
+          PQS:  LDs using PHOENIX quasi-spherical models (mu>=0.1 only)
+          P100: LDs using PHOENIX models and interpolating 100 mu-points
+                with cubic spline (i.e., like Claret & Bloemen, 2011)
+    min_w: Float
+       Minimum wavelength to integrate (if None, use the minimum wavelength
+       of the response function).
+    max_w: Float
+       Maximum wavelength to integrate (if None, use the maximum wavelength
+       of the response function).
+    name: String
+       Name of the object we are working on (to write in ofile).
     ifile: String
        Filename with the user inputs.
     ofile: String
        If not None, filename where to write the LCDs.
     interpolation_order: Integer
+       Degree of the spline interpolation order.
     atlas_correction: Bool
        If True, convert ATLAS intensities using c/lambda**2 (ATLAS
        intensities are given per frequency).
@@ -1118,10 +1153,18 @@ def lds(ifile=None, ofile=None, interpolation_order=1,
 
     Returns
     -------
-    LDC: 1D float tuple
+    LDC: 1D list
+       Each element in this list contains a tuple of all the LD laws
+       for a given parameter set.  The tuples of LD laws contain:
        The linear (a), quadratic (u1, u2), three-parameter (b1, b2, b3),
        non-linear (c1, c2, c3, c4), logarithmic (l1, l2),
        exponential (e1, e2), and square-root laws (s1, s2).
+
+    Example
+    -------
+    >>> import get_lds as lds
+    >>> ldc1 = lds.lds(ifile="input_files/example_input_file.dat")
+    >>> ldc2 = lds.lds(5500.0, 4.5, 0.0, -1, "KpHiRes", "A100,P100")
     """
     print('\n\t ##########################################################\n'
           '\n\t             Limb Darkening Calculations {:s}\n'
@@ -1149,46 +1192,55 @@ def lds(ifile=None, ofile=None, interpolation_order=1,
             "#          please consider citing Espinoza & Jordan (2015).\n\n".
              format(version))
 
-    f = open(ifile, 'r')
-    while True:
-      line = f.readline()
-      if line == '':
-         break
-      elif line[0] != '#':
-         splitted = line.split('\t')
-         if len(splitted) == 1:
-            # If split is not done with tabs, but spaces:
-            splitted = line.split()
-         name = fix_spaces(splitted[0])
-         teff = splitted[1]
-         grav = splitted[2]
-         met = splitted[3]
-         vturb = splitted[4]
-         RF = fix_spaces(splitted[5])
-         FT = fix_spaces(splitted[6])
-         min_w = splitted[7]
-         min_w = np.double(min_w)
-         max_w = splitted[8]
-         max_w = np.double(max_w.split('\n')[0])
-         s_teff = np.double(teff)
-         s_grav = np.double(grav)
-         s_vturb = np.double(vturb)
-         s_met = np.double(met)
-         if(min_w == -1 or max_w == -1):
-            min_w = None
-            max_w = None
-         response_function = RF
-         models = FT.split(',')
+    # Read input parameters from file:
+    if ifile is not None:
+        input_set = []
+        f = open(ifile, 'r')
+        while True:
+          line = f.readline()
+          if line == '':
+             break
+          elif line[0] != '#':
+             splitted = line.strip().split()
+             name  = fix_spaces(splitted[0])
+             Teff  = np.double(splitted[1])
+             grav  = np.double(splitted[2])
+             metal = np.double(splitted[3])
+             vturb = np.double(splitted[4])
+             RF    = fix_spaces(splitted[5])
+             FT    = fix_spaces(splitted[6])
+             min_w = np.double(splitted[7])
+             max_w = np.double(splitted[8])
+             if(min_w == -1 or max_w == -1):
+                min_w = None
+                max_w = None
+             input_set.append([name, RF, FT, metal, grav, Teff, vturb,
+                               min_w, max_w])
+    # Else, take input parameters from the arguments:
+    else:
+        if (Teff is None  or  grav is None  or  metal is None  or
+            RF is None  or  FT is None):
+            print("Invalid input parameters.  Either define ifile, or "
+                  "define Teff, grav, metal, RF, and FT.")
+            return None
+        input_set = [[name, RF, FT, metal, grav, Teff, vturb, min_w, max_w]]
+
+    # Compute LDCs for each input set:
+    LDC = []
+    for i in np.arange(len(input_set)):
+         iset = input_set[i]
+         models = iset[2].split(',')
          for model in models:
-             LDC = calc_lds(name, response_function, model,
-                            atlas_correction, photon_correction, s_met, s_grav,
-                            s_teff, s_vturb, interpolation_order,
-                            min_w, max_w, fout)
+             iset[2] = model
+             LDC.append(calc_lds(*iset, atlas_correction, photon_correction,
+                                 interpolation_order, fout))
+
     if ofile is not None:
         fout.close()
         print('\t > Program finished without problems.\n'
               '\t   The results were saved in the "results" folder.\n')
     return LDC
+
 
 if __name__ == "__main__":
     ifile, ofile = parse()
