@@ -19,12 +19,6 @@ except:
 
 ########## OPTIONS ###################################################
 
-# Filename with the stellar information, wavelengths of integration, etc:
-input_filename = 'input_files/all_atlas_lds_kepler.dat'
-
-# Filename of the output (which will contain the lds):
-output_filename = 'all_atlas_lds_kepler.dat'
-
 # Order of the interpolation done for sampling intensities:
 interpolation_order = 1
 
@@ -35,21 +29,34 @@ atlas_correction = True
 # Now decide if you want to apply photon counting correction, lambda/hc:
 photon_correction = True
 
-######################################################################
-# This is just in case you want to run everything from command line:
 
-parser = argparse.ArgumentParser()
-# Set the input file:
-parser.add_argument('-ifile', default=None)
-# Set the output file:
-parser.add_argument('-ofile', default=None)
-args = parser.parse_args()
+def parse():
+    """
+    Parse command-line arguments.
 
-if args.ifile is not None:
-   input_filename = args.ifile
+    Returns
+    -------
+    input_filename: String
+       Command-line input set by '-ifile'.
+    output_filename: String
+       Command-line input set by '-ofile'.  Output file where to store results.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-ifile', default=None)
+    parser.add_argument('-ofile', default=None)
+    args = parser.parse_args()
 
-if args.ofile is not None:
-   output_filename = args.ofile
+    # Set the input file:
+    input_filename = 'input_files/all_atlas_lds_kepler.dat'
+    if args.ifile is not None:
+       input_filename = args.ifile
+
+    # Set the output file:
+    output_filename = 'all_atlas_lds_kepler.dat'
+    if args.ofile is not None:
+       output_filename = args.ofile
+
+    return input_filename, output_filename
 
 
 def FixSpaces(intervals):
@@ -1138,67 +1145,76 @@ def save_lds(fout, name, response_function, model, atlas_correction,
     return 1
 
 
-print('\n\t ##########################################################\n'
-      '\n\t             Limb Darkening Calculations {:s}\n'
-      '\n\t      Author: Nestor Espinoza (nespino@astro.puc.cl)\n'
-      '\n\t DISCLAIMER: If you make use of this code for your research,\n'
-      '\t please consider citing Espinoza & Jordan (2015)\n'
-      '\n\t ##########################################################'.
-       format(version))
+def lds(**args):
+    print('\n\t ##########################################################\n'
+          '\n\t             Limb Darkening Calculations {:s}\n'
+          '\n\t      Author: Nestor Espinoza (nespino@astro.puc.cl)\n'
+          '\n\t DISCLAIMER: If you make use of this code for your research,\n'
+          '\t please consider citing Espinoza & Jordan (2015)\n'
+          '\n\t ##########################################################'.
+           format(version))
 
-fout = open('results/'+output_filename, 'w')
-fout.write(70*"#" + "\n"
- "#\n# Limb Darkening Calculations {}\n"
- "#\n# Limb-darkening coefficients for linear (a), quadratic (u1,u2),\n"
-    "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
-    "# logarithmic (l1,l2), exponential (e1,e2), "
-       "and square-root laws (s1,s2).\n"
- "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
- "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
-    "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
-    "#               Ashley Villar    (vvillar@cfa.harvard.edu) \n"
- "#\n# DISCLAIMER: If you make use of this code for your research,\n"
-    "#             please consider citing Espinoza & Jordan (2015).\n\n".
-     format(version))
+    if args is None:
+        print("ARGS is NONE\n")
 
-f = open(input_filename, 'r')
-while True:
-  line = f.readline()
-  if line == '':
-     break
-  elif line[0] != '#':
-     splitted = line.split('\t')
-     if len(splitted) == 1:
-        # If split is not done with tabs, but spaces:
-        splitted = line.split()
-     name = fix_spaces(splitted[0])
-     teff = splitted[1]
-     grav = splitted[2]
-     met = splitted[3]
-     vturb = splitted[4]
-     RF = fix_spaces(splitted[5])
-     FT = fix_spaces(splitted[6])
-     min_w = splitted[7]
-     min_w = np.double(min_w)
-     max_w = splitted[8]
-     max_w = np.double(max_w.split('\n')[0])
-     s_teff = np.double(teff)
-     s_grav = np.double(grav)
-     s_vturb = np.double(vturb)
-     s_met = np.double(met)
-     if(min_w == -1 or max_w == -1):
-        min_w = None
-        max_w = None
-     response_function = RF
-     models = FT.split(',')
-     for model in models:
-         out = save_lds(fout, name, response_function, model,
-                        atlas_correction, photon_correction, s_met, s_grav,
-                        s_teff, s_vturb, min_w, max_w)
-         if out == -1:
-            print('Error with target {:s}. Not saved...'.format(name))
-fout.close()
+    print(args)
+    fout = open('results/'+ofile, 'w')
+    fout.write(70*"#" + "\n"
+     "#\n# Limb Darkening Calculations {}\n"
+     "#\n# Limb-darkening coefficients for linear (a), quadratic (u1,u2),\n"
+        "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
+        "# logarithmic (l1,l2), exponential (e1,e2), "
+           "and square-root laws (s1,s2).\n"
+     "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
+     "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
+        "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
+        "#               Ashley Villar    (vvillar@cfa.harvard.edu) \n"
+     "#\n# DISCLAIMER: If you make use of this code for your research,\n"
+        "#             please consider citing Espinoza & Jordan (2015).\n\n".
+         format(version))
 
-print('\t > Program finished without problems.\n'
-      '\t   The results were saved in the "results" folder.\n')
+    f = open(ifile, 'r')
+    while True:
+      line = f.readline()
+      if line == '':
+         break
+      elif line[0] != '#':
+         splitted = line.split('\t')
+         if len(splitted) == 1:
+            # If split is not done with tabs, but spaces:
+            splitted = line.split()
+         name = fix_spaces(splitted[0])
+         teff = splitted[1]
+         grav = splitted[2]
+         met = splitted[3]
+         vturb = splitted[4]
+         RF = fix_spaces(splitted[5])
+         FT = fix_spaces(splitted[6])
+         min_w = splitted[7]
+         min_w = np.double(min_w)
+         max_w = splitted[8]
+         max_w = np.double(max_w.split('\n')[0])
+         s_teff = np.double(teff)
+         s_grav = np.double(grav)
+         s_vturb = np.double(vturb)
+         s_met = np.double(met)
+         if(min_w == -1 or max_w == -1):
+            min_w = None
+            max_w = None
+         response_function = RF
+         models = FT.split(',')
+         for model in models:
+             out = save_lds(fout, name, response_function, model,
+                            atlas_correction, photon_correction, s_met, s_grav,
+                            s_teff, s_vturb, min_w, max_w)
+             if out == -1:
+                print('Error with target {:s}. Not saved...'.format(name))
+    fout.close()
+
+    print('\t > Program finished without problems.\n'
+          '\t   The results were saved in the "results" folder.\n')
+
+if __name__ == "__main__":
+    ifile, ofile = parse()
+    lds(ifile=ifile, ofile=ofile)
 
