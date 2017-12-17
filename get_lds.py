@@ -897,7 +897,9 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
 
     return I0
 
-def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction, interpolation_order):
+
+def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction,
+                               interpolation_order):
     I_l = np.array([])
     for i in range(len(mu)):
         Ifunc = si.UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
@@ -945,9 +947,11 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     mu100 = np.arange(0.01,1.01,0.01)
     I100 = np.zeros((len(wavelengths),len(mu100)))
     for i in range(len(wavelengths)):
-        II = si.UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3) # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+        # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+        II = si.UnivariateSpline(new_mu,I[i,idx_new],s=0,k=3)
         I100[i] = II(mu100)
-    return mu100,I100
+    return mu100, I100
+
 
 def save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
              s_met, s_grav, s_teff, s_vturb, min_w=None,max_w=None):
@@ -1045,13 +1049,6 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
             e1,e2 = fit_exponential(mu,I0)
             s1,s2 = fit_square_root(mu,I0)
 
-        # Save them to the input file:
-        fout.write(name+'\t'+model+'\t'+response_function+'\t'+str(np.round(chosen_teff,2))+'\t'+str(np.round(chosen_grav,2))+'\t'+str(np.round(chosen_met,2))+\
-                  '\t'+str(np.round(chosen_vturb,2))+'\t'+str(a)+'\t'+str(u1)+'\t'+str(u2)+'\t'+str(b1)+'\t'+str(b2)+'\t'+str(b3)+'\t'+str(c1)+'\t'+str(c2)+'\t'+\
-                  str(c3)+'\t'+str(c4)+'\t'+str(l1)+'\t'+str(l2)+'\t'+str(e1)+'\t'+str(e2)+'\t'+str(s1)+'\t'+str(s2)+'\n')
-
-        print('\t > Done! \n\t {:s}\n'.format(70*'#'))
-
     ######################################################################
     # IF USING PHOENIX MODELS....
     ######################################################################
@@ -1125,12 +1122,22 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
             e1,e2 = fit_exponential(new_mu,new_I0)
             s1,s2 = fit_square_root(new_mu,new_I0)
 
-        # Save to the file:
-        fout.write(name+'\t'+model+'\t'+response_function+'\t'+str(np.round(chosen_teff,2))+'\t'+str(np.round(chosen_grav,2))+'\t'+str(np.round(chosen_met,2))+\
-                  '\t'+str(np.round(chosen_vturb,2))+'\t'+str(a)+'\t'+str(u1)+'\t'+str(u2)+'\t'+str(b1)+'\t'+str(b2)+'\t'+str(b3)+'\t'+str(c1)+'\t'+str(c2)+'\t'+\
-                  str(c3)+'\t'+str(c4)+'\t'+str(l1)+'\t'+str(l2)+'\t'+str(e1)+'\t'+str(e2)+'\t'+str(s1)+'\t'+str(s2)+'\n')
+    # Save to the file:
+    fout.write(70*"#" + "\n")
+    fout.write("{:s}  {:s}  {:s}\nTeff={:.1f}K  log(g)={:.1f}  "
+               "[M/H]={:.1f}  vturb={:.1f}\n\n".format(name, model,
+                              response_function, chosen_teff, chosen_grav,
+                              chosen_met, chosen_vturb))
+    fout.write("a = {:12.8f}\n"
+               "u1, u2 = {:11.8f}, {:11.8f}\n"
+               "b1, b2, b3 = {:11.8f}, {:11.8f}, {:11.8f}\n"
+               "c1, c2, c3, c4 = {:11.8f}, {:11.8f}, {:11.8f}, {:11.8f}\n"
+               "l1, l2 = {:11.8f}, {:11.8f}\n"
+               "e1, e2 = {:11.8f}, {:11.8f}\n"
+               "s1, s2 = {:11.8f}, {:11.8f}\n\n".format(a,  u1, u2,  b1, b2, b3,
+                                  c1, c2, c3, c4,  l1, l2,  e1, e2,  s1, s2))
 
-        print('\t > Done! \n\t {:s}\n'.format(70*'#'))
+    print('\t > Done! \n\t {:s}\n'.format(70*'#'))
     return 1
 
 print('\n\t ##########################################################\n'
@@ -1142,24 +1149,19 @@ print('\n\t ##########################################################\n'
        format(version))
 
 fout = open('results/'+output_filename,'w')
-fout.write('############################################################\n')
-fout.write('# \n')
-fout.write('# Limb Darkening Calculations '+version+' \n')
-fout.write('# \n')
-fout.write('# Limb-darkening coefficients for linear (a), quadratic (u1,u2), three parameter (b1,b2,b3) \n')
-fout.write('# non-linear (c1,c2,c3,c4), logarithmic (l1,l2), exponential (e1,e2) and square-root laws (s1,s2).\n')
-fout.write('# \n')
-fout.write('# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n')
-fout.write('# \n')
-fout.write('# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n')
-fout.write('#               Andres Jordan    (ajordan@astro.puc.cl) \n')
-fout.write('#               Ashley Villar    (vvillar@cfa.harvard.edu) \n')
-fout.write('# \n')
-fout.write('# DISCLAIMER: If you make use of this code for your research, please consider citing Espinoza & Jordan (2015)\n')
-fout.write('# \n')
-fout.write('#------------------------------------------------------------\n')
-fout.write('# Name\tLD fit\tRF\tT_eff\tlog(g)\t[M/H]\tvturb\ta       \tu1      \tu2      \tb1      \tb2      \tb3      \tc1      \t c2'+\
-              '      \tc3      \tc4      \tl1      \tl2      \te1      \te2              \ts1      \ts2      \n')
+fout.write(70*"#" + "\n"
+ "#\n# Limb Darkening Calculations {}\n"
+ "#\n# Limb-darkening coefficients for linear (a), quadratic (u1,u2),\n"
+    "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
+    "# logarithmic (l1,l2), exponential (e1,e2) and square-root laws (s1,s2).\n"
+ "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
+ "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
+    "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
+    "#               Ashley Villar    (vvillar@cfa.harvard.edu) \n"
+ "#\n# DISCLAIMER: If you make use of this code for your research,\n"
+    "#             please consider citing Espinoza & Jordan (2015).\n\n".
+     format(version))
+
 
 f = open(input_filename,'r')
 ok = True
