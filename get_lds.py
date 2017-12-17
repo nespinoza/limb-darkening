@@ -782,10 +782,7 @@ def read_ATLAS(chosen_filename, model):
     # Define the ATLAS grid in mu = cos(theta):
     mu = np.array([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25,
                    0.2, 0.15, 0.125, 0.1, 0.075, 0.05, 0.025, 0.01])
-    if(model != 'A100'):
-       mu100 = np.array([])
-    else:
-       mu100 = np.arange(0.01, 1.01, 0.01)
+    mu100 = np.arange(1.0, 0.0, -0.01)
 
     # Now prepare files and read data from the ATLAS models:
     with open(chosen_filename, 'r') as f:
@@ -802,7 +799,7 @@ def read_ATLAS(chosen_filename, model):
     for i in np.arange(nwave):
         # If no jump of line or comment, save the intensities:
         splitted = lines[i].split()
-        if(len(splitted)==18):
+        if len(splitted)==18:
             wavelengths[i] = np.double(splitted[0])*10  # nano to angstrom
             intensities[i] = np.array(splitted[1:], np.double)
             ndigits = len(str(int(intensities[i,1])))
@@ -814,14 +811,17 @@ def read_ATLAS(chosen_filename, model):
                 intensities[i,1:] = intensities[i,1:]*intensities[i,0]
                 # If requested, extract the 100 mu-points, with cubic spline
                 # interpolation (k=3) through all points (s=0) as CB11:
-                if(model == 'A100'):
+                if model == 'A100':
                     II = si.UnivariateSpline(mu[::-1], intensities[i,::-1],
                                              s=0, k=3)
                     I100[i] = II(mu100)
 
     # Select only those with non-zero intensity:
     flag = intensities[:,0] != 0.0
-    return wavelengths[flag], intensities[flag], I100[flag], mu, mu100
+    if model == "A100":
+        return wavelengths[flag], I100[flag], mu100
+    else:
+        return wavelengths[flag], intensities[flag], mu
 
 
 def read_PHOENIX(chosen_path):
@@ -834,25 +834,18 @@ def read_PHOENIX(chosen_path):
     return wavelengths, I, mu
 
 
-def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav,
+def integrate_response_ATLAS(wavelengths, I, mu, S_res, S_wav,
                              atlas_correction, photon_correction,
                              interpolation_order, model):
     # Define the number of mu angles at which we will perform the integrations:
-    if model == "A100":
-      nmus = len(mu100)
-    else:
-      nmus = len(mu)
+    nmus = len(mu)
 
     # Integrate intensity through each angle:
     I_l = np.array([])
     for i in range(nmus):
         # Interpolate the intensities:
-        if(model == "A100"):
-            Ifunc = si.UnivariateSpline(wavelengths, I100[:,i], s=0,
-                                        k=interpolation_order)
-        else:
-            Ifunc = si.UnivariateSpline(wavelengths, I[:,i], s=0,
-                                        k=interpolation_order)
+        Ifunc = si.UnivariateSpline(wavelengths, I[:,i], s=0,
+                                    k=interpolation_order)
         # If several wavelength ranges where given, integrate through
         # each chunk one at a time.  If not, integrate the given chunk:
         if type(S_res) is list:
@@ -877,13 +870,9 @@ def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav,
             else:
                 integrand = S_res*Ifunc(S_wav)
             integration_results = np.trapz(integrand, x=S_wav)
-        I_l = np.append(I_l,integration_results)
+        I_l = np.append(I_l, integration_results)
 
-    # Normalize profile with respect to I(mu = 1):
-    if(model == "A100"):
-      I0 = I_l/(I_l[-1])
-    else:
-      I0 = I_l/(I_l[0])
+    I0 = I_l/(I_l[0])
 
     return I0
 
@@ -1013,41 +1002,27 @@ def calc_lds(name, response_function, model, atlas_correction,
         # If model is "A100", it also returns the interpolated
         # intensities (I100) and the associated mu values (mu100).
         # If not, those arrays are empty:
-        wavelengths, I, I100, mu, mu100 = read_ATLAS(chosen_filename, model)
+        wavelengths, I, mu = read_ATLAS(chosen_filename, model)
 
         # Now use these intensities to obtain the (normalized) integrated
         # intensities with the response function:
-        I0 = integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res,
+        I0 = integrate_response_ATLAS(wavelengths, I, mu, S_res,
                                     S_wav, atlas_correction, photon_correction,
                                     interpolation_order, model)
 
         # Finally, obtain the limb-darkening coefficients:
-        if(model == "AS"):
-            # Save indexes which apply to Sing's (2010) criterion:
-            idx_sing = np.where(mu>=0.05)[0]
-            c1,c2,c3,c4 = fit_non_linear(mu,I0)
-            a = fit_linear(mu[idx_sing],I0[idx_sing])
-            u1,u2 = fit_quadratic(mu[idx_sing],I0[idx_sing])
-            b1,b2,b3 = fit_three_parameter(mu[idx_sing],I0[idx_sing])
-            l1,l2 = fit_logarithmic(mu[idx_sing],I0[idx_sing])
-            e1,e2 = fit_exponential(mu[idx_sing],I0[idx_sing])
-            s1,s2 = fit_square_root(mu[idx_sing],I0[idx_sing])
-        elif(model == "A100"):
-            c1,c2,c3,c4 = fit_non_linear(mu100,I0)
-            a = fit_linear(mu100,I0)
-            u1,u2 = fit_quadratic(mu100,I0)
-            b1,b2,b3 = fit_three_parameter(mu100,I0)
-            l1,l2 = fit_logarithmic(mu100,I0)
-            e1,e2 = fit_exponential(mu100,I0)
-            s1,s2 = fit_square_root(mu100,I0)
+        if model == "AS":
+            # Select indices as in Sing (2010):
+            idx = mu >= 0.05
         else:
-            c1,c2,c3,c4 = fit_non_linear(mu,I0)
-            a = fit_linear(mu,I0)
-            u1,u2 = fit_quadratic(mu,I0)
-            b1,b2,b3 = fit_three_parameter(mu,I0)
-            l1,l2 = fit_logarithmic(mu,I0)
-            e1,e2 = fit_exponential(mu,I0)
-            s1,s2 = fit_square_root(mu,I0)
+            idx = mu >= 0.0 # Select all
+        c1, c2, c3, c4 = fit_non_linear(mu, I0)
+        a = fit_linear(mu[idx], I0[idx])
+        u1, u2 = fit_quadratic(mu[idx], I0[idx])
+        b1, b2, b3 = fit_three_parameter(mu[idx], I0[idx])
+        l1, l2 = fit_logarithmic(mu[idx], I0[idx])
+        e1, e2 = fit_exponential(mu[idx], I0[idx])
+        s1, s2 = fit_square_root(mu[idx], I0[idx])
 
     ######################################################################
     # IF USING PHOENIX MODELS....
