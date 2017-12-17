@@ -43,7 +43,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-ifile', default=None)
 # Set the output file:
 parser.add_argument('-ofile', default=None)
-
 args = parser.parse_args()
 
 if args.ifile is not None:
@@ -118,7 +117,7 @@ def getIntensitySteps(lines):
 
 
 version = 'v.1.0.'
-def get_derivatives(rP,IP):
+def get_derivatives(rP, IP):
     """
     This function calculates the derivatives in an intensity profile I(r).
     For a detailed explaination, see Section 2.2 in Espinoza & Jordan (2015).
@@ -160,9 +159,7 @@ def fix_spaces(the_string):
 
 def fit_exponential(mu, I):
     """
-    FIT EXPONENTIAL LD LAW
-
-    This function calculates the coefficients for the exponential LD law.
+    Calculate the coefficients for the exponential LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -178,8 +175,8 @@ def fit_exponential(mu, I):
     A = np.zeros([2,2])
     # Define b vector for the linear system:
     b = np.zeros(2)
-    # Obtain the alpha_n_k and beta_k that fill the A matrix and b vector. In this case,
-    # g_1 = 1-mu, g_2 = 1/(1-exp(mu)):
+    # Obtain alpha_n_k and beta_k that fill the A matrix and b vector.
+    # In this case, g_1 = 1-mu, g_2 = 1/(1-exp(mu)):
     A[0,0] = sum((1.0-mu)**2)                    # alpha_{1,1}
     A[0,1] = sum((1.0-mu)*(1./(1.-np.exp(mu))))  # alpha_{1,2}
     A[1,0] = A[0,1]                              # alpha_{2,1} = alpha_{1,2}
@@ -189,11 +186,9 @@ def fit_exponential(mu, I):
     return np.linalg.solve(A,b)
 
 
-def fit_logarithmic(mu,I):
+def fit_logarithmic(mu, I):
     """
-    FIT LOGARITHMIC LD LAW
-
-    This function calculates the coefficients for the logarithmic LD law.
+    Calculate the coefficients for the logarithmic LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -222,9 +217,7 @@ def fit_logarithmic(mu,I):
 
 def fit_square_root(mu, I):
     """
-    FIT SQUARE ROOT LD LAW
-
-    This function calculates the coefficients for the square-root LD law.
+    Calculates the coefficients for the square-root LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -251,9 +244,7 @@ def fit_square_root(mu, I):
 
 def fit_non_linear(mu, I):
     """
-    FIT NON-LINEAR LD LAW
-
-    This function calculates the coefficients for the non-linear LD law.
+    Calculate the coefficients for the non-linear LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -281,9 +272,7 @@ def fit_non_linear(mu, I):
 
 def fit_three_parameter(mu, I):
     """
-    FIT THREE PARAMETER LD LAW
-
-    This function calculates the coefficients for the three-parameter LD law.
+    Calculate the coefficients for the three-parameter LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -309,11 +298,9 @@ def fit_three_parameter(mu, I):
     return np.linalg.solve(A,b)
 
 
-def fit_quadratic(mu,I):
+def fit_quadratic(mu, I):
     """
-    FIT QUADRATIC LD LAW
-
-    This function calculates the coefficients for the quadratic LD law.
+    Calculate the coefficients for the quadratic LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -339,9 +326,7 @@ def fit_quadratic(mu,I):
 
 def fit_linear(mu, I):
     """
-    FIT LINEAR
-
-    This function calculates the coefficients for the linear LD law.
+    Calculate the coefficients for the linear LD law.
     It assumes input intensities are normalized.  For a derivation of the
     least-squares problem solved, see Espinoza & Jordan (2015).
 
@@ -795,14 +780,15 @@ def get_response(min_w, max_w, response_function):
 
     return min_w, max_w, S_wav, S_res
 
-def read_ATLAS(chosen_filename, model):
 
+def read_ATLAS(chosen_filename, model):
     # Define the ATLAS grid in mu = cos(theta):
-    mu = np.array([1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.25,0.2,0.15,0.125,0.1,0.075,0.05,0.025,0.01])
+    mu = np.array([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25,
+                   0.2, 0.15, 0.125, 0.1, 0.075, 0.05, 0.025, 0.01])
     if(model != 'A100'):
        mu100 = np.array([])
     else:
-       mu100 = np.arange(0.01,1.01,0.01)
+       mu100 = np.arange(0.01, 1.01, 0.01)
 
     # Now prepare files and read data from the ATLAS models:
     with open(chosen_filename, 'r') as f:
@@ -825,11 +811,15 @@ def read_ATLAS(chosen_filename, model):
             ndigits = len(str(int(intensities[i,1])))
             # Only if I(1) is different from zero, fit the LDs:
             if(intensities[i,0]!=0.0):
-                intensities[i,1:] = intensities[i,1:]/1e5                            # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
-                intensities[i,1:] = intensities[i,1:]*intensities[i,0]                 # All the rest of the intensities are normalized w/r to the center one.
-                # If we want, we extract the 100 interpolated mu-points:
+                # Kurucz doesn't put points on his files (e.g.: 0.8013 is 8013).
+                intensities[i,1:] = intensities[i,1:]/1e5
+                # Normalzie intensities wrt the first one:
+                intensities[i,1:] = intensities[i,1:]*intensities[i,0]
+                # If requested, extract the 100 mu-points, with cubic spline
+                # interpolation (k=3) through all points (s=0) as CB11:
                 if(model == 'A100'):
-                    II = si.UnivariateSpline(mu[::-1],intensities[i,::-1],s=0,k=3)     # Cubic splines (k=3), interpolation through all points (s=0) ala CB11.
+                    II = si.UnivariateSpline(mu[::-1], intensities[i,::-1],
+                                             s=0, k=3)
                     I100[i] = II(mu100)
 
     # Select only those with non-zero intensity:
@@ -847,22 +837,23 @@ def read_PHOENIX(chosen_path):
     return wavelengths, I, mu
 
 
-def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav, \
-                             atlas_correction, photon_correction, interpolation_order, model):
+def integrate_response_ATLAS(wavelengths, I, I100, mu, mu100, S_res, S_wav,
+                             atlas_correction, photon_correction,
+                             interpolation_order, model):
     # Define the number of mu angles at which we will perform the integrations:
-    if(model == "A100"):
+    if model == "A100":
       nmus = len(mu100)
     else:
       nmus = len(mu)
 
-    # Now integrate intensity through each angle:
+    # Integrate intensity through each angle:
     I_l = np.array([])
     for i in range(nmus):
         # Interpolate the intensities:
         if(model == "A100"):
-            Ifunc = si.UnivariateSpline(wavelengths,I100[:,i],s=0,k=interpolation_order)
+            Ifunc = si.UnivariateSpline(wavelengths, I100[:,i], s=0, k=interpolation_order)
         else:
-            Ifunc = si.UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
+            Ifunc = si.UnivariateSpline(wavelengths, I[:,i], s=0, k=interpolation_order)
         # If several wavelength ranges where given, integrate through each chunk one at a time.
         # If not, integrate the given chunk:
         if type(S_res) is list:
@@ -902,7 +893,8 @@ def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction,
                                interpolation_order):
     I_l = np.array([])
     for i in range(len(mu)):
-        Ifunc = si.UnivariateSpline(wavelengths,I[:,i],s=0,k=interpolation_order)
+        Ifunc = si.UnivariateSpline(wavelengths, I[:,i], s=0,
+                                    k=interpolation_order)
         if type(S_res) is list:
             integration_results = 0.0
             for j in range(len(S_res)):
@@ -910,19 +902,21 @@ def integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav, correction,
                     integrand = S_res[j]*Ifunc(S_wav[j])*S_wav[j]
                 else:
                     integrand = S_res[j]*Ifunc(S_wav[j])
-                integration_results = integration_results + np.trapz(integrand, x=S_wav[j])
+                integration_results = integration_results + \
+                                      np.trapz(integrand, x=S_wav[j])
 
         else:
+            integrand = S_res * Ifunc(S_wav)  #lambda x,I,S: I(x)*S(x)
             if correction:
-                integrand = S_res*Ifunc(S_wav)*S_wav     #lambda x,I,S: (I(x)*S(x))*x # We want the integral of Intensity_nu*(Response Function*lambda)*c/lambda**2
-            else:
-                integrand = S_res*Ifunc(S_wav)           #lambda x,I,S: I(x)*S(x)
-            integration_results = np.trapz(integrand, x=S_wav)# integrate.quad(integrand,min_w,max_w, args=(Ifunc,S,),full_output=1)
+                integrand *= S_wav            #lambda x,I,S: (I(x)*S(x))*x
+            # Integral of Intensity_nu*(Response Function*lambda)*c/lambda**2
+            integration_results = np.trapz(integrand, x=S_wav)
         I_l = np.append(I_l,integration_results)
 
     return I_l/(I_l[-1])
 
-def get_rmax(mu,I0):
+
+def get_rmax(mu, I0):
     # Apply correction due to spherical extension. First, estimate the r:
     r = np.sqrt(1.0-(mu**2))
     # Estimate the derivatives at each point:
@@ -930,8 +924,8 @@ def get_rmax(mu,I0):
     # Estimate point of maximum (absolute) derivative:
     idx_max = np.argmax(np.abs(m))
     r_max = rPi[idx_max]
-    # To refine this value, take 20 points to the left and 20 to the right of this value,
-    # generate spline and search for roots:
+    # To refine this value, take 20 points to the left and 20 to the right
+    # of this value, generate spline and search for roots:
     ndata = 20
     r_maxes = rPi[idx_max-ndata:idx_max+ndata]
     m_maxes = m[idx_max-ndata:idx_max+ndata]
@@ -943,6 +937,7 @@ def get_rmax(mu,I0):
        fine_r_max = fine_r_max[iidx_min]
     return r,fine_r_max
 
+
 def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     mu100 = np.arange(0.01,1.01,0.01)
     I100 = np.zeros((len(wavelengths),len(mu100)))
@@ -953,45 +948,47 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     return mu100, I100
 
 
-def save_lds(fout, name, response_function, model, atlas_correction, photon_correction, \
-             s_met, s_grav, s_teff, s_vturb, min_w=None,max_w=None):
+def save_lds(fout, name, response_function, model, atlas_correction,
+             photon_correction, s_met, s_grav, s_teff, s_vturb,
+             min_w=None, max_w=None):
     """
-    SAVE LDS
-
-    This function generates the limb-darkening coefficients. Note that response_function can be a string with the filename of a
-    response function not in the list. The file has to be in the response_functions folder.
+    Generate the limb-darkening coefficients.  Note that response_function
+    can be a string with the filename of a response function not in the
+    list. The file has to be in the response_functions folder.
 
     INPUTS:
-
-     fout:                   Object that contains the information of a file that is open in order to save the LDCs.
-
-     name:                   Name of the object we are working on.
-
-     response_function:      Number of a standard response function or filename of a response function under the response_functions folder.
-
-     model:                  Model atmosphere to be used.
-
-     atlas_correction:       True if corrections in the integrand of the ATLAS models should be applied (i.e., transformation
-                             of ATLAS intensities given in frequency to per wavelength)
-
-     photon_correction:      If True, correction for photon-counting devices is used.
-
-     s_met:                  Metallicity of the star.
-
-     s_grav:                 log_g of the star (cgs).
-
-     s_teff:                 Effective temperature of the star (K).
-
-     s_vturb:                Turbulent velocity in the star (km/s)
-
-     min_w:                  Minimum wavelength to integrate (if None, minimum wavelength of the response function is used).
-
-     max_w:                  Maximum wavelength to integrate (if None, maximum wavelength of the response function is used)
+     fout: FILE
+        File where to save the LDCs.
+     name: String
+        Name of the object we are working on.
+     response_function:
+        Number of a standard response function or filename of a response
+        function under the response_functions folder.
+     model:
+        Model atmosphere to be used.
+     atlas_correction:
+        True if corrections in the integrand of the ATLAS models should
+        be applied (i.e., transformation of ATLAS intensities given in
+        frequency to per wavelength)
+     photon_correction:
+        If True, correction for photon-counting devices is used.
+     s_met:
+        Metallicity of the star.
+     s_grav:
+        log_g of the star (cgs).
+     s_teff:
+        Effective temperature of the star (K).
+     s_vturb:
+        Turbulent velocity in the star (km/s)
+     min_w: Float
+        Minimum wavelength to integrate (if None, use the minimum wavelength
+        of the response function).
+     max_w: Float
+        Maximum wavelength to integrate (if None, use the maximum wavelength
+        of the response function).
 
     OUTPUTS
-
-     Save results to the fout object (i.e., to the output file).
-
+      Save results to the fout object (i.e., to the output file).
     """
 
     print('\n\t Reading response functions\n\t --------------------------')
@@ -1140,6 +1137,7 @@ def save_lds(fout, name, response_function, model, atlas_correction, photon_corr
     print('\t > Done! \n\t {:s}\n'.format(70*'#'))
     return 1
 
+
 print('\n\t ##########################################################\n'
       '\n\t             Limb Darkening Calculations {:s}\n'
       '\n\t      Author: Nestor Espinoza (nespino@astro.puc.cl)\n'
@@ -1148,12 +1146,13 @@ print('\n\t ##########################################################\n'
       '\n\t ##########################################################'.
        format(version))
 
-fout = open('results/'+output_filename,'w')
+fout = open('results/'+output_filename, 'w')
 fout.write(70*"#" + "\n"
  "#\n# Limb Darkening Calculations {}\n"
  "#\n# Limb-darkening coefficients for linear (a), quadratic (u1,u2),\n"
     "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
-    "# logarithmic (l1,l2), exponential (e1,e2) and square-root laws (s1,s2).\n"
+    "# logarithmic (l1,l2), exponential (e1,e2), "
+       "and square-root laws (s1,s2).\n"
  "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
  "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
     "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
@@ -1162,14 +1161,12 @@ fout.write(70*"#" + "\n"
     "#             please consider citing Espinoza & Jordan (2015).\n\n".
      format(version))
 
-
-f = open(input_filename,'r')
-ok = True
-while(ok):
+f = open(input_filename, 'r')
+while True:
   line = f.readline()
-  if(line==''):
+  if line == '':
      break
-  elif(line[0]!='#'):
+  elif line[0] != '#':
      splitted = line.split('\t')
      if len(splitted) == 1:
         # If split is not done with tabs, but spaces:
@@ -1195,12 +1192,13 @@ while(ok):
      response_function = RF
      models = FT.split(',')
      for model in models:
-         out = save_lds(fout, name, response_function, model, atlas_correction,
-               photon_correction, s_met, s_grav, s_teff, s_vturb, min_w, max_w)
-         if(out==-1):
+         out = save_lds(fout, name, response_function, model,
+                        atlas_correction, photon_correction, s_met, s_grav,
+                        s_teff, s_vturb, min_w, max_w)
+         if out == -1:
             print('Error with target {:s}. Not saved...'.format(name))
-
 fout.close()
 
 print('\t > Program finished without problems.\n'
       '\t   The results were saved in the "results" folder.\n')
+
