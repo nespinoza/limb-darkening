@@ -955,17 +955,15 @@ def get100_PHOENIX(wavelengths, I, new_mu, idx_new):
     return mu100, I100
 
 
-def save_lds(fout, name, response_function, model, atlas_correction,
+def calc_lds(name, response_function, model, atlas_correction,
              photon_correction, s_met, s_grav, s_teff, s_vturb,
-             min_w=None, max_w=None):
+             min_w=None, max_w=None, fout=None):
     """
     Generate the limb-darkening coefficients.  Note that response_function
     can be a string with the filename of a response function not in the
     list. The file has to be in the response_functions folder.
 
     INPUTS:
-     fout: FILE
-        File where to save the LDCs.
      name: String
         Name of the object we are working on.
      response_function:
@@ -993,9 +991,14 @@ def save_lds(fout, name, response_function, model, atlas_correction,
      max_w: Float
         Maximum wavelength to integrate (if None, use the maximum wavelength
         of the response function).
+     fout: FILE
+        If not None, file where to save the LDCs.
 
     OUTPUTS
-      Save results to the fout object (i.e., to the output file).
+       LDC: 1D float tuple
+          The linear (a), quadratic (u1, u2), three-parameter (b1, b2, b3),
+          non-linear (c1, c2, c3, c4), logarithmic (l1, l2),
+          exponential (e1, e2), and square-root laws (s1, s2).
     """
 
     print('\n\t Reading response functions\n\t --------------------------')
@@ -1072,19 +1075,18 @@ def save_lds(fout, name, response_function, model, atlas_correction,
         I0 = integrate_response_PHOENIX(wavelengths, I, mu, S_res, S_wav,
                                         photon_correction, interpolation_order)
 
-        # Obtain correction due to spherical extension. First, obtain the value of r_max:
+        # Obtain correction due to spherical extension. First, get r_max:
         r, fine_r_max = get_rmax(mu, I0)
 
-        # Now obtain the new values of r for each intensity point and leave out the ones that
-        # have r>1:
+        # Now get r for each intensity point and leave out those that have r>1:
         new_r = r/fine_r_max
         idx_new = np.where(new_r<=1.0)[0]
         new_r = new_r[idx_new]
         new_mu = np.sqrt(1.0-(new_r**2))
         new_I0 = I0[idx_new]
 
-        # Now, if the model requires it, obtain 100-mu points interpolated in this final range of "usable"
-        # intensities:
+        # Now, if the model requires it, obtain 100-mu points interpolated
+        # in this final range of "usable" intensities:
         if(model == 'P100'):
             mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
             I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100,
@@ -1126,26 +1128,46 @@ def save_lds(fout, name, response_function, model, atlas_correction,
             e1,e2 = fit_exponential(new_mu,new_I0)
             s1,s2 = fit_square_root(new_mu,new_I0)
 
+    # Stack all LD coefficients into one single tuple:
+    LDC = a, u1, u2, b1, b2, b3, c1, c2, c3, c4, l1, l2, e1, e2, s1, s2
+
     # Save to the file:
-    fout.write(70*"#" + "\n")
-    fout.write("{:s}  {:s}  {:s}\nTeff={:.1f}K  log(g)={:.1f}  "
-               "[M/H]={:.1f}  vturb={:.1f}\n\n".format(name, model,
-                              response_function, chosen_teff, chosen_grav,
-                              chosen_met, chosen_vturb))
-    fout.write("a = {:12.8f}\n"
-               "u1, u2 = {:11.8f}, {:11.8f}\n"
-               "b1, b2, b3 = {:11.8f}, {:11.8f}, {:11.8f}\n"
-               "c1, c2, c3, c4 = {:11.8f}, {:11.8f}, {:11.8f}, {:11.8f}\n"
-               "l1, l2 = {:11.8f}, {:11.8f}\n"
-               "e1, e2 = {:11.8f}, {:11.8f}\n"
-               "s1, s2 = {:11.8f}, {:11.8f}\n\n".format(a,  u1, u2,  b1, b2, b3,
-                                  c1, c2, c3, c4,  l1, l2,  e1, e2,  s1, s2))
+    if fout is not None:
+        fout.write(70*"#" + "\n")
+        fout.write("{:s}  {:s}  {:s}\nTeff={:.1f}K  log(g)={:.1f}  "
+                   "[M/H]={:.1f}  vturb={:.1f}\n\n".format(name, model,
+                                  response_function, chosen_teff, chosen_grav,
+                                  chosen_met, chosen_vturb))
+        fout.write("a = {:12.8f}\n"
+                   "u1, u2 = {:11.8f}, {:11.8f}\n"
+                   "b1, b2, b3 = {:11.8f}, {:11.8f}, {:11.8f}\n"
+                   "c1, c2, c3, c4 = {:11.8f}, {:11.8f}, {:11.8f}, {:11.8f}\n"
+                   "l1, l2 = {:11.8f}, {:11.8f}\n"
+                   "e1, e2 = {:11.8f}, {:11.8f}\n"
+                   "s1, s2 = {:11.8f}, {:11.8f}\n\n".format(*LDC))
 
     print('\t > Done! \n\t {:s}\n'.format(70*'#'))
-    return 1
+    return LDC
 
 
-def lds(**args):
+def lds(ifile=None, ofile=None):
+    """
+    Compute limb-darkening coefficients.
+
+    Parameters
+    ----------
+    ifile: String
+       Filename with the user inputs.
+    ofile: String
+       If not None, filename where to write the LCDs.
+
+    Returns
+    -------
+    LDC: 1D float tuple
+       The linear (a), quadratic (u1, u2), three-parameter (b1, b2, b3),
+       non-linear (c1, c2, c3, c4), logarithmic (l1, l2),
+       exponential (e1, e2), and square-root laws (s1, s2).
+    """
     print('\n\t ##########################################################\n'
           '\n\t             Limb Darkening Calculations {:s}\n'
           '\n\t      Author: Nestor Espinoza (nespino@astro.puc.cl)\n'
@@ -1154,24 +1176,23 @@ def lds(**args):
           '\n\t ##########################################################'.
            format(version))
 
-    if args is None:
-        print("ARGS is NONE\n")
-
-    print(args)
-    fout = open('results/'+ofile, 'w')
-    fout.write(70*"#" + "\n"
-     "#\n# Limb Darkening Calculations {}\n"
-     "#\n# Limb-darkening coefficients for linear (a), quadratic (u1,u2),\n"
-        "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
-        "# logarithmic (l1,l2), exponential (e1,e2), "
-           "and square-root laws (s1,s2).\n"
-     "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
-     "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
-        "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
-        "#               Ashley Villar    (vvillar@cfa.harvard.edu) \n"
-     "#\n# DISCLAIMER: If you make use of this code for your research,\n"
-        "#             please consider citing Espinoza & Jordan (2015).\n\n".
-         format(version))
+    if ofile is None:
+      fout = None
+    else:
+        fout = open('results/'+ofile, 'w')
+        fout.write(70*"#" + "\n"
+         "#\n# Limb Darkening Calculations {}\n"
+         "#\n# Limb-darkening coefficients for linear (a), quadratic (u1,u2),\n"
+            "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
+            "# logarithmic (l1,l2), exponential (e1,e2), "
+               "and square-root laws (s1,s2).\n"
+         "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
+         "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
+            "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
+            "#               Ashley Villar    (vvillar@cfa.harvard.edu) \n"
+         "#\n# DISCLAIMER: If you make use of this code for your research,\n"
+            "#          please consider citing Espinoza & Jordan (2015).\n\n".
+             format(version))
 
     f = open(ifile, 'r')
     while True:
@@ -1204,17 +1225,15 @@ def lds(**args):
          response_function = RF
          models = FT.split(',')
          for model in models:
-             out = save_lds(fout, name, response_function, model,
+             LDC = calc_lds(name, response_function, model,
                             atlas_correction, photon_correction, s_met, s_grav,
-                            s_teff, s_vturb, min_w, max_w)
-             if out == -1:
-                print('Error with target {:s}. Not saved...'.format(name))
-    fout.close()
-
-    print('\t > Program finished without problems.\n'
-          '\t   The results were saved in the "results" folder.\n')
+                            s_teff, s_vturb, min_w, max_w, fout)
+    if ofile is not None:
+        fout.close()
+        print('\t > Program finished without problems.\n'
+              '\t   The results were saved in the "results" folder.\n')
+    return LDC
 
 if __name__ == "__main__":
     ifile, ofile = parse()
     lds(ifile=ifile, ofile=ofile)
-
