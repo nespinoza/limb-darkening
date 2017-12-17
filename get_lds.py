@@ -966,6 +966,8 @@ def calc_lds(name, response_function, model, atlas_correction,
         Effective temperature of the star (K).
      s_vturb:
         Turbulent velocity in the star (km/s)
+     interpolation_order: Integer
+        Degree of the spline interpolation order.
      min_w: Float
         Minimum wavelength to integrate (if None, use the minimum wavelength
         of the response function).
@@ -1016,13 +1018,6 @@ def calc_lds(name, response_function, model, atlas_correction,
             idx = mu >= 0.05
         else:
             idx = mu >= 0.0 # Select all
-        c1, c2, c3, c4 = fit_non_linear(mu, I0)
-        a = fit_linear(mu[idx], I0[idx])
-        u1, u2 = fit_quadratic(mu[idx], I0[idx])
-        b1, b2, b3 = fit_three_parameter(mu[idx], I0[idx])
-        l1, l2 = fit_logarithmic(mu[idx], I0[idx])
-        e1, e2 = fit_exponential(mu[idx], I0[idx])
-        s1, s2 = fit_square_root(mu[idx], I0[idx])
 
     ######################################################################
     # IF USING PHOENIX MODELS....
@@ -1050,51 +1045,36 @@ def calc_lds(name, response_function, model, atlas_correction,
         new_r = r/fine_r_max
         idx_new = np.where(new_r<=1.0)[0]
         new_r = new_r[idx_new]
-        new_mu = np.sqrt(1.0-(new_r**2))
-        new_I0 = I0[idx_new]
+        # Reuse variable names:
+        mu = np.sqrt(1.0-(new_r**2))
+        I0 = I0[idx_new]
 
         # Now, if the model requires it, obtain 100-mu points interpolated
         # in this final range of "usable" intensities:
         if(model == 'P100'):
-            mu100, I100 = get100_PHOENIX(wavelengths, I, new_mu, idx_new)
-            I0_100 = integrate_response_PHOENIX(wavelengths, I100, mu100,
+            mu, I100 = get100_PHOENIX(wavelengths, I, mu, idx_new)
+            I0 = integrate_response_PHOENIX(wavelengths, I100, mu,
                         S_res, S_wav, photon_correction, interpolation_order)
 
        # Now define each possible model and fit LDs:
-        if(model == 'PQS'): # Quasi-spherical model, as defined by Claret et al. (2012), mu>=0.1
-            idx = np.where(new_mu>=0.1)[0]
-            c1,c2,c3,c4 = fit_non_linear(new_mu[idx],new_I0[idx])
-            a = fit_linear(new_mu[idx],new_I0[idx])
-            u1,u2 = fit_quadratic(new_mu[idx],new_I0[idx])
-            b1,b2,b3 = fit_three_parameter(new_mu[idx],new_I0[idx])
-            l1,l2 = fit_logarithmic(new_mu[idx],new_I0[idx])
-            e1,e2 = fit_exponential(new_mu[idx],new_I0[idx])
-            s1,s2 = fit_square_root(new_mu[idx],new_I0[idx])
-        elif(model == 'PS'): # Sing method:
-            idx = np.where(new_mu>=0.05)[0]
-            c1,c2,c3,c4 = fit_non_linear(new_mu,new_I0)
-            a = fit_linear(new_mu[idx],new_I0[idx])
-            u1,u2 = fit_quadratic(new_mu[idx],new_I0[idx])
-            b1,b2,b3 = fit_three_parameter(new_mu[idx],new_I0[idx])
-            l1,l2 = fit_logarithmic(new_mu[idx],new_I0[idx])
-            e1,e2 = fit_exponential(new_mu[idx],new_I0[idx])
-            s1,s2 = fit_square_root(new_mu[idx],new_I0[idx])
-        elif(model == 'P100'):
-            c1,c2,c3,c4 = fit_non_linear(mu100,I0_100)
-            a = fit_linear(mu100,I0_100)
-            u1,u2 = fit_quadratic(mu100,I0_100)
-            b1,b2,b3 = fit_three_parameter(mu100,I0_100)
-            l1,l2 = fit_logarithmic(mu100,I0_100)
-            e1,e2 = fit_exponential(mu100,I0_100)
-            s1,s2 = fit_square_root(mu100,I0_100)
+        if   model == 'PQS': # Quasi-spherical model (Claret et al. 2012)
+            idx = mu >= 0.1
+        elif model == 'PS':  # Sing method
+            idx = mu >= 0.05
         else:
-            c1,c2,c3,c4 = fit_non_linear(new_mu,new_I0)
-            a = fit_linear(new_mu,new_I0)
-            u1,u2 = fit_quadratic(new_mu,new_I0)
-            b1,b2,b3 = fit_three_parameter(new_mu,new_I0)
-            l1,l2 = fit_logarithmic(new_mu,new_I0)
-            e1,e2 = fit_exponential(new_mu,new_I0)
-            s1,s2 = fit_square_root(new_mu,new_I0)
+            idx = mu >= 0.0
+
+    # Now compute each LD law:
+    c1, c2, c3, c4 = fit_non_linear(mu, I0)
+    a = fit_linear(mu[idx], I0[idx])
+    u1, u2 = fit_quadratic(mu[idx], I0[idx])
+    b1, b2, b3 = fit_three_parameter(mu[idx], I0[idx])
+    l1, l2 = fit_logarithmic(mu[idx], I0[idx])
+    e1, e2 = fit_exponential(mu[idx], I0[idx])
+    s1, s2 = fit_square_root(mu[idx], I0[idx])
+    # Make this correction:
+    if model == 'PQS':
+      c1, c2, c3, c4 = fit_non_linear(mu[idx], I0[idx])
 
     # Stack all LD coefficients into one single tuple:
     LDC = a, u1, u2, b1, b2, b3, c1, c2, c3, c4, l1, l2, e1, e2, s1, s2
