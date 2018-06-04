@@ -104,6 +104,12 @@ The code will generate limb-darkening coefficients for the given targets in the
 input file under the "results" folder. Each file has a description for each column; see 
 the example files in that folder for an example output.
 
+CONTRIBUTORS
+------------
+
+- B. Rackham.
+- P. Cubillos.
+
 
 Frequently Asked Questions (FAQ)
 --------------------------------

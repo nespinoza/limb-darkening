@@ -922,8 +922,10 @@ def get_rmax(mu, I0):
     # To refine this value, take 20 points to the left and 20 to the right
     # of this value, generate spline and search for roots:
     ndata = 20
-    r_maxes = rPi[idx_max-ndata:idx_max+ndata]
-    m_maxes = m[idx_max-ndata:idx_max+ndata]
+    idx_lo = np.max([idx_max-ndata, 0])
+    idx_hi = np.min([idx_max+ndata, len(mu)-1])
+    r_maxes = rPi[idx_lo:idx_hi]
+    m_maxes = m[idx_lo:idx_hi]
     spl = si.UnivariateSpline(r_maxes[::-1],m_maxes[::-1],s=0,k=4)
     fine_r_max = spl.derivative().roots()
     if(len(fine_r_max)>1):
