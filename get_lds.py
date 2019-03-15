@@ -1194,10 +1194,11 @@ def lds(Teff=None, grav=None, metal=None, vturb=-1,
             "# three parameter (b1,b2,b3), non-linear (c1,c2,c3,c4),\n"
             "# logarithmic (l1,l2), exponential (e1,e2), "
                "and square-root laws (s1,s2).\n"
-         "#\n# Author:       Nestor Espinoza (nespino@astro.puc.cl) \n"
-         "#\n# Contributors: Benjamin Rackham (brackham@email.arizona.com) \n"
-            "#               Andres Jordan    (ajordan@astro.puc.cl) \n"
-            "#               Ashley Villar    (vvillar@cfa.harvard.edu) \n"
+         "#\n# Author:       Nestor Espinoza   (nespino@astro.puc.cl) \n"
+         "#\n# Contributors: Benjamin Rackham  (brackham@email.arizona.com) \n"
+            "#               Andres Jordan     (ajordan@astro.puc.cl) \n"
+            "#               Ashley Villar     (vvillar@cfa.harvard.edu) \n"
+            "#               Patricio Cubillos (patricio.cubillos@oeaw.ac.at) \n"
          "#\n# DISCLAIMER: If you make use of this code for your research,\n"
             "#          please consider citing Espinoza & Jordan (2015).\n\n".
              format(version))
