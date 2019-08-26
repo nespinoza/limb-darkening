@@ -429,7 +429,7 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
         print('\t    + Model file not found.')
         response = urlopen('http://kurucz.harvard.edu/grids/grid' +
                                   met_dir + '/')
-        html = response.read()
+        html = str(response.read())
         ok = True
         filenames = []
         while(ok):
