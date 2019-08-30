@@ -3,10 +3,10 @@ import sys
 import os
 import numpy as np
 import glob
-try:     # Python2
-  import urllib2 as urllib
-except:  # Python3
-  import urllib
+if sys.version_info.major == 2:
+    from urllib2 import urlopen
+else:
+     from urllib.request import urlopen
 import argparse
 import scipy.interpolate as si
 from copy import copy
@@ -427,9 +427,9 @@ def ATLAS_model_search(s_met, s_grav, s_teff, s_vturb):
         # If not in the system, download it from Kurucz's website.
         # First, check all possible files to download:
         print('\t    + Model file not found.')
-        response = urllib.urlopen('http://kurucz.harvard.edu/grids/grid' +
+        response = urlopen('http://kurucz.harvard.edu/grids/grid' +
                                   met_dir + '/')
-        html = response.read()
+        html = str(response.read())
         ok = True
         filenames = []
         while(ok):
@@ -649,8 +649,8 @@ def PHOENIX_model_search(s_met, s_grav, s_teff, s_vturb):
        for i in np.arange(len(all_files)):
            all_files[i] = all_files[i].strip()
     else:
-       response = urllib.urlopen('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/')
-       html = response.read()
+       response = urlopen('ftp://phoenix.astro.physik.uni-goettingen.de/SpecIntFITS/PHOENIX-ACES-AGSS-COND-SPECINT-2011/'+model+'/')
+       html = str(response.read())
        all_files = []
        while True:
             idx = html.find('lte')
