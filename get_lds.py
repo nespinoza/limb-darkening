@@ -726,7 +726,7 @@ def get_response(min_w, max_w, response_function):
     elif response_function.lower() == 'irac1':
        response_file = root + "standard/IRAC1_subarray_response_function.txt"
     elif response_function.lower() == 'irac2':
-       response_file = root + "standard/RAC2_subarray_response_function.txt"
+       response_file = root + "standard/IRAC2_subarray_response_function.txt"
     elif response_function.lower() == 'wfc3':
        response_file = root + "standard/WFC3_response_function.txt"
     # User-defined response functions:
@@ -759,13 +759,14 @@ def get_response(min_w, max_w, response_function):
             max_w = max(w)
          print('\t > IRAC response file detected.  Switch from microns to '
                'Angstroms.')
-         print('\t > Minimum wavelength: {} A.\n'
-               '\t > Maximum wavelength: {} A.'.format(min(w), max(w)))
+         
     else:
          if min_w is None:
             min_w = min(w)
          if max_w is None:
             max_w = max(w)
+    print('\t > Minimum wavelength: {} A.\n'
+          '\t > Maximum wavelength: {} A.'.format(min(w), max(w)))
 
     # Fit a univariate linear spline (k=1) with s=0 (a node in each data-point):
     S = si.UnivariateSpline(w, r, s=0, k=1)
