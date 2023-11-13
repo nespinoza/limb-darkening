@@ -15,7 +15,7 @@ This code makes use of three important libraries:
 
 	+ Numpy.
 	+ Scipy.
-	+ Pyfits.
+	+ Astropy.
 
 All of them are open source and can be easily installed in any machine. Furthermore, 
 it makes use of wget to download the model atmospheres needed for your specific needs.
@@ -92,7 +92,7 @@ And the code will calculate the limb-darkening coefficients for the targets defi
 input file. If you automatize the creation of the input filename, you can run everything 
 directly from terminal by running:
 
-                python get_lds.y -ifile input_filename -ofile output_filename
+                python get_lds.py -ifile input_filename -ofile output_filename
 
 Where input_filename is the location of your input filename (e.g., /home/myfolder/input_file.dat), 
 and output_filename is the name of the file that will be saved under the "results" folder.
